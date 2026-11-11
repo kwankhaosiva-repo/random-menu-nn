@@ -2,6 +2,62 @@
 // ~160 เมนู ครอบคลุมไทย จีน ญี่ปุ่น ฝรั่ง
 // ทำง่าย หาวัตถุดิบได้ในตลาดไทย
 
+export const PROTEIN_CATEGORIES = {
+  หมู: {
+    label: "เนื้อหมู",
+    cuts: [
+      { id: "หมูกรอบ", label: "หมูกรอบ" },
+      { id: "หมูสับ", label: "หมูสับ" },
+      { id: "หมูชิ้น", label: "หมูชิ้น" },
+      { id: "หมูสไลด์", label: "หมูสไลด์" },
+      { id: "หมูสามชั้น", label: "หมูสามชั้น" },
+    ]
+  },
+  ไก่: {
+    label: "เนื้อไก่",
+    cuts: [
+      { id: "อกไก่", label: "อกไก่" },
+      { id: "ไก่สับ", label: "ไก่สับ" },
+      { id: "ไก่", label: "ไก่ชิ้น / น่อง / ปีก" },
+    ]
+  },
+  เนื้อ: {
+    label: "เนื้อวัว",
+    cuts: [
+      { id: "เนื้อสไลด์", label: "เนื้อสไลด์" },
+      { id: "เนื้อ", label: "เนื้อวัวชิ้น" },
+    ]
+  },
+  ทะเล: {
+    label: "อาหารทะเล",
+    cuts: [
+      { id: "กุ้ง", label: "กุ้ง" },
+      { id: "หมึก", label: "ปลาหมึก" },
+      { id: "ปลา", label: "ปลา (นิล/กระพง/ทู/สลิด)" },
+      { id: "หอย", label: "หอย" },
+      { id: "ปู", label: "เนื้อปู" },
+    ]
+  },
+  เป็ด: {
+    label: "เป็ด",
+    cuts: [
+      { id: "เป็ด", label: "เนื้อเป็ด / เป็ดย่าง" }
+    ]
+  },
+  ไข่: {
+    label: "ไข่",
+    cuts: [
+      { id: "ไข่", label: "เมนูไข่" }
+    ]
+  },
+  ผัก: {
+    label: "มังสวิรัติ / เต้าหู้",
+    cuts: [
+      { id: "ผัก", label: "ผักล้วน / เต้าหู้ / เห็ด" }
+    ]
+  }
+};
+
 // Protein groups สำหรับ filter
 export const PROTEIN_GROUPS = {
   หมู:   ["หมูสับ", "หมูชิ้น", "หมูสไลด์", "หมูสามชั้น", "หมูกรอบ"],
@@ -10,6 +66,7 @@ export const PROTEIN_GROUPS = {
   ทะเล:  ["กุ้ง", "หมึก", "ปู", "ปลา", "หอย"],
   ไข่:   ["ไข่"],
   เป็ด:  ["เป็ด"],
+  ผัก:   ["ผัก"],
 };
 
 // dish_type values
@@ -38,6 +95,10 @@ export const MENUS = [
   { id: "th_012", name: "ผัดเม็ดมะม่วงไก่",      cuisine: "ไทย", dish_type: "กับข้าว",  proteins: ["ไก่"],               protein_groups: ["ไก่"],    spicy: false, is_pair: false },
   { id: "th_013", name: "ผัดน้ำมันหอยอกไก่",     cuisine: "ไทย", dish_type: "กับข้าว",  proteins: ["อกไก่"],             protein_groups: ["ไก่"],    spicy: false, is_pair: false },
   { id: "th_014", name: "ผัดคะน้าน้ำมันหอยหมูกรอบ",cuisine: "ไทย", dish_type: "กับข้าว", proteins: ["หมูกรอบ"],         protein_groups: ["หมู"],    spicy: false, is_pair: false },
+  { id: "th_014b", name: "ผัดแขนงหมูกรอบ",       cuisine: "ไทย", dish_type: "กับข้าว", proteins: ["หมูกรอบ"],         protein_groups: ["หมู"],    spicy: false, is_pair: false },
+  { id: "th_014c", name: "ผัดกะหล่ำปลีหมูกรอบ",   cuisine: "ไทย", dish_type: "กับข้าว", proteins: ["หมูกรอบ"],         protein_groups: ["หมู"],    spicy: false, is_pair: false },
+  { id: "th_014d", name: "ผัดผักบุ้งหมูกรอบ",      cuisine: "ไทย", dish_type: "กับข้าว", proteins: ["หมูกรอบ"],         protein_groups: ["หมู"],    spicy: true,  is_pair: false },
+  { id: "th_014e", name: "หมูกรอบทอดน้ำปลา",     cuisine: "ไทย", dish_type: "กับข้าว", proteins: ["หมูกรอบ"],         protein_groups: ["หมู"],    spicy: false, is_pair: false },
   { id: "th_015", name: "ผัดบล็อกโคลี่กุ้ง",     cuisine: "ไทย", dish_type: "กับข้าว",  proteins: ["กุ้ง"],              protein_groups: ["ทะเล"],   spicy: false, is_pair: false },
   { id: "th_016", name: "ผัดบล็อกโคลี่อกไก่",    cuisine: "ไทย", dish_type: "กับข้าว",  proteins: ["อกไก่"],             protein_groups: ["ไก่"],    spicy: false, is_pair: false },
 
@@ -120,6 +181,7 @@ export const MENUS = [
   { id: "th_090", name: "ต้มเลือดหมู",            cuisine: "ไทย", dish_type: "ต้ม/แกง",  proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: false, is_pair: true },
   { id: "th_091", name: "ต้มโคล้งปลาทอด",        cuisine: "ไทย", dish_type: "ต้ม/แกง",  proteins: ["ปลา"],               protein_groups: ["ทะเล"],   spicy: true,  is_pair: true },
   { id: "th_092", name: "ต้มจับฉ่าย",             cuisine: "ไทย", dish_type: "ต้ม/แกง",  proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: false, is_pair: true },
+  { id: "th_092b", name: "ต้มจับฉ่ายหมูกรอบ",      cuisine: "ไทย", dish_type: "ต้ม/แกง",  proteins: ["หมูกรอบ"],           protein_groups: ["หมู"],    spicy: false, is_pair: true },
   { id: "th_093", name: "แกงเผ็ดเป็ดย่าง",        cuisine: "ไทย", dish_type: "ต้ม/แกง",  proteins: ["เป็ด"],              protein_groups: ["เป็ด"],   spicy: true,  is_pair: false },
 
   // ─── ไทย: จานเดียว ──────────────────────────────────────────
@@ -142,6 +204,8 @@ export const MENUS = [
   { id: "th_115", name: "ก๋วยจั๊บญวน",            cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: false, is_pair: false },
   { id: "th_116", name: "ก๋วยเตี๋ยวคั่วไก่",      cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["ไก่"],               protein_groups: ["ไก่"],    spicy: false, is_pair: false },
   { id: "th_117", name: "ราดหน้าหมูนุ่ม",         cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: false, is_pair: false },
+  { id: "th_117b", name: "ราดหน้าหมูกรอบ",        cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูกรอบ"],           protein_groups: ["หมู"],    spicy: false, is_pair: false },
+  { id: "th_107b", name: "ข้าวผัดคะน้าหมูกรอบ",   cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูกรอบ"],           protein_groups: ["หมู"],    spicy: false, is_pair: false },
   { id: "th_118", name: "ราดหน้าทะเล",            cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["กุ้ง","หมึก"],       protein_groups: ["ทะเล"],   spicy: false, is_pair: false },
   { id: "th_119", name: "ผัดซีอิ๊วหมู",           cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: false, is_pair: false },
   { id: "th_120", name: "สุกี้น้ำ",               cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูสไลด์","เนื้อสไลด์"],protein_groups: ["หมู","เนื้อ"],spicy: false, is_pair: false },

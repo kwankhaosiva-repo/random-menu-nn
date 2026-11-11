@@ -1,5 +1,5 @@
-// app.js — Core Random Logic & UI Controller
-import { MENUS } from '../data/menus.js';
+// app.js — Core Random Logic & UI Controller (Professional UI/UX Version)
+import { MENUS, PROTEIN_CATEGORIES } from '../data/menus.js';
 import {
   loadSettings, saveSettings,
   loadHistory, addHistory, removeHistoryItem, removeHistoryById, clearHistory, isInHistory,
@@ -12,6 +12,7 @@ import {
 let currentMorning = [];
 let currentEvening = [];
 let activeCatalogFilter = 'all';
+let activeProteinCat = 'all';
 
 // ─── Utility ────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ function shuffle(arr) {
   return a;
 }
 
-function showToast(message, duration = 2500) {
+function showToast(message, duration = 2400) {
   const toast = document.getElementById('app-toast');
   if (!toast) return;
   toast.textContent = message;
@@ -39,20 +40,17 @@ function showToast(message, duration = 2500) {
 
 function getEligibleMenus(slotSettings, globalSettings, excludeIds = []) {
   const allAvailable = getCombinedMenus(MENUS);
-  const { no_spicy, dish_types, include_single } = slotSettings;
-  const { no_repeat_30d, proteins, cuisines } = globalSettings;
-
-  // Determine allowed dish types
-  const effectiveTypes = include_single
-    ? [...dish_types, 'จานเดียว']
-    : dish_types.filter(t => t !== 'จานเดียว');
+  const { no_spicy, dish_types } = slotSettings;
+  const { no_repeat_30d, specific_cuts, cuisines } = globalSettings;
 
   return allAvailable.filter(m => {
     // Exclude menus already shown or specifically excluded
     if (excludeIds.includes(m.id)) return false;
 
-    // Filter dish_type
-    if (effectiveTypes.length && !effectiveTypes.includes(m.dish_type)) return false;
+    // Filter dish_type for this meal slot
+    if (dish_types && dish_types.length && !dish_types.includes(m.dish_type)) {
+      return false;
+    }
 
     // Filter spicy
     if (no_spicy && m.spicy) return false;
@@ -60,11 +58,15 @@ function getEligibleMenus(slotSettings, globalSettings, excludeIds = []) {
     // Filter cuisine ([] = all)
     if (cuisines && cuisines.length && !cuisines.includes(m.cuisine)) return false;
 
-    // Filter proteins ([] = all)
-    if (proteins && proteins.length) {
-      const hasGroup = m.protein_groups && m.protein_groups.some(g => proteins.includes(g));
-      const isVegOnly = (!m.protein_groups || m.protein_groups.length === 0) && proteins.includes('ผัก');
-      if (!hasGroup && !isVegOnly) return false;
+    // Filter granular protein cuts (if user selected specific cuts)
+    if (specific_cuts && specific_cuts.length > 0) {
+      const matchCut = specific_cuts.some(cut => {
+        if (cut === 'ผัก') {
+          return (!m.protein_groups || m.protein_groups.length === 0) || (m.proteins && m.proteins.includes('ผัก'));
+        }
+        return (m.proteins && m.proteins.includes(cut)) || m.name.includes(cut);
+      });
+      if (!matchCut) return false;
     }
 
     // Filter 30-day repetition
@@ -98,13 +100,13 @@ function pickMultiple(slotSettings, globalSettings, excludeIds = [], ensurePairS
   return picked;
 }
 
-// ─── UI Rendering ───────────────────────────────────────────────────────────
+// ─── UI Rendering (Clean Professional Style) ────────────────────────────────
 
-const CUISINE_FLAGS = {
-  ไทย: '🇹🇭 ไทย',
-  จีน: '🇨🇳 จีน',
-  ญี่ปุ่น: '🇯🇵 ญี่ปุ่น',
-  ฝรั่ง: '🌍 ฝรั่ง',
+const CUISINE_LABELS = {
+  ไทย: 'อาหารไทย',
+  จีน: 'อาหารจีน',
+  ญี่ปุ่น: 'อาหารญี่ปุ่น',
+  ฝรั่ง: 'อาหารตะวันตก',
 };
 
 const DISH_TYPE_CLASS = {
@@ -116,15 +118,17 @@ const DISH_TYPE_CLASS = {
 function renderDishCard(menu, mealType) {
   const isMorning = mealType === 'morning';
   const typeClass = DISH_TYPE_CLASS[menu.dish_type] || 'badge-type-side';
+  
   const spicyBadge = menu.spicy
-    ? '<span class="badge badge-spicy">🌶️ เผ็ด</span>'
-    : '<span class="badge badge-mild">🥬 ไม่เผ็ด</span>';
+    ? '<span class="badge badge-spicy"><span class="dot dot-red"></span>รสเผ็ด</span>'
+    : '<span class="badge badge-mild"><span class="dot dot-green"></span>ไม่เผ็ด</span>';
+    
   const customBadge = menu.is_custom
-    ? '<span class="badge badge-custom">⭐ เมนูของคุณ</span>'
+    ? '<span class="badge badge-custom">เมนูของคุณ</span>'
     : '';
 
-  const proteinBadges = (menu.protein_groups || [])
-    .map(p => `<span class="badge badge-protein">${p}</span>`)
+  const cutBadges = (menu.proteins && menu.proteins.length ? menu.proteins : menu.protein_groups || [])
+    .map(p => `<span class="badge badge-cut">${p}</span>`)
     .join('');
 
   return `
@@ -135,14 +139,14 @@ function renderDishCard(menu, mealType) {
           ${customBadge}
         </div>
         <div class="badges-row">
-          <span class="badge badge-country">${CUISINE_FLAGS[menu.cuisine] || menu.cuisine}</span>
+          <span class="badge badge-country">${CUISINE_LABELS[menu.cuisine] || menu.cuisine}</span>
           <span class="badge ${typeClass}">${menu.dish_type}</span>
           ${spicyBadge}
-          ${proteinBadges}
+          ${cutBadges}
         </div>
       </div>
       <button type="button" class="btn-reroll-item" data-id="${menu.id}" data-meal="${mealType}" title="สุ่มเปลี่ยนเฉพาะเมนูนี้">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
           <path d="M3 3v5h5"></path>
           <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
@@ -161,9 +165,14 @@ function renderResults(morningMenus, eveningMenus) {
   if (!morningMenus.length && !eveningMenus.length) {
     container.innerHTML = `
       <div class="empty-state-card">
-        <div class="empty-icon">🔍</div>
-        <h3 class="empty-title">ไม่พบเมนูที่ตรงตามเงื่อนไขที่เลือก</h3>
-        <p class="empty-desc">ลองปลดล็อควัตถุดิบ หรือยกเลิกการเลือก "ไม่ซ้ำ 30 วัน" เพื่อเปิดรับรายการอาหารที่กว้างขึ้น</p>
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <h3 class="empty-title">ไม่พบเมนูอาหารที่ตรงตามเงื่อนไข</h3>
+        <p class="empty-desc">ลองปลดล็อคชิ้นส่วนวัตถุดิบ หรือยกเลิกการเลือก "ไม่ซ้ำ 30 วัน" เพื่อเปิดรับรายการอาหารที่กว้างขึ้น</p>
       </div>
     `;
     return;
@@ -175,7 +184,10 @@ function renderResults(morningMenus, eveningMenus) {
     html += `
       <div class="meal-result-group">
         <div class="meal-result-header">
-          <h3 class="meal-result-title morning-text">🌅 มื้อเช้า</h3>
+          <div class="meal-title-group">
+            <span class="meal-indicator-bar morning-bar"></span>
+            <h3 class="meal-result-title morning-text">มื้อเช้า</h3>
+          </div>
           <span class="dish-count-tag">${morningMenus.length} เมนู</span>
         </div>
         <div class="dish-cards-list">
@@ -189,7 +201,10 @@ function renderResults(morningMenus, eveningMenus) {
     html += `
       <div class="meal-result-group">
         <div class="meal-result-header">
-          <h3 class="meal-result-title evening-text">🌆 มื้อเย็น</h3>
+          <div class="meal-title-group">
+            <span class="meal-indicator-bar evening-bar"></span>
+            <h3 class="meal-result-title evening-text">มื้อเย็น</h3>
+          </div>
           <span class="dish-count-tag">${eveningMenus.length} เมนู</span>
         </div>
         <div class="dish-cards-list">
@@ -215,7 +230,7 @@ function renderResults(morningMenus, eveningMenus) {
 function handleIndividualReroll(event) {
   const btn = event.currentTarget;
   const oldId = btn.dataset.id;
-  const meal = btn.dataset.meal; // 'morning' or 'evening'
+  const meal = btn.dataset.meal;
   const settings = readFormSettings();
 
   // 1. Remove the old menu from 30-day history so it won't be penalized
@@ -232,7 +247,7 @@ function handleIndividualReroll(event) {
   const candidatePool = getEligibleMenus(slotSettings, settings.global, currentDisplayedIds);
 
   if (!candidatePool.length) {
-    showToast('⚠️ ไม่มีเมนูอื่นที่ตรงกับเงื่อนไขที่เลือก');
+    showToast('ไม่มีเมนูอื่นที่ตรงกับเงื่อนไขที่เลือก');
     return;
   }
 
@@ -253,7 +268,7 @@ function handleIndividualReroll(event) {
   // 6. Re-render results & update header counters
   renderResults(currentMorning, currentEvening);
   updateHeaderCounts();
-  showToast(`✨ สุ่มใหม่เป็น: ${replacement.name}`);
+  showToast(`เปลี่ยนเป็น: ${replacement.name}`);
 }
 
 // ─── Main Random Roll Action ────────────────────────────────────────────────
@@ -290,12 +305,7 @@ function executeRandomRoll() {
   renderResults(morningList, eveningList);
   updateHeaderCounts();
 
-  // Animation pulse on CTA button
-  const heroBtn = document.getElementById('btn-random-hero');
-  heroBtn.classList.add('pulse');
-  setTimeout(() => heroBtn.classList.remove('pulse'), 400);
-
-  showToast(`🎉 สุ่มเมนูสำเร็จ! ได้ทั้งหมด ${morningList.length + eveningList.length} รายการ`);
+  showToast(`สุ่มเมนูสำเร็จ รวม ${morningList.length + eveningList.length} รายการ`);
 }
 
 // ─── Settings Form Read & Apply ─────────────────────────────────────────────
@@ -304,23 +314,29 @@ function readFormSettings() {
   const morningCountBtn = document.querySelector('[name=morning-count].active');
   const eveningCountBtn = document.querySelector('[name=evening-count].active');
 
+  const morningTypes = [...document.querySelectorAll('[name=morning-types]:checked')].map(el => el.value);
+  const eveningTypes = [...document.querySelectorAll('[name=evening-types]:checked')].map(el => el.value);
+
+  const selectedCuts = [...document.querySelectorAll('[name=specific-cut]:checked')].map(el => el.value);
+  const selectedCuisines = [...document.querySelectorAll('[name=cuisine]:checked')].map(el => el.value);
+
   return {
     morning: {
       count: parseInt(morningCountBtn ? morningCountBtn.dataset.val : '2', 10),
       no_spicy: document.getElementById('morning-no-spicy').checked,
-      dish_types: ['กับข้าว'],
-      include_single: document.getElementById('morning-include-single').checked,
+      dish_types: morningTypes.length ? morningTypes : ['กับข้าว'],
     },
     evening: {
       count: parseInt(eveningCountBtn ? eveningCountBtn.dataset.val : '2', 10),
       no_spicy: document.getElementById('evening-no-spicy').checked,
-      dish_types: ['กับข้าว', 'ต้ม/แกง', 'จานเดียว'],
+      dish_types: eveningTypes.length ? eveningTypes : ['กับข้าว', 'ต้ม/แกง', 'จานเดียว'],
       pair_soup: document.getElementById('evening-pair-soup').checked,
     },
     global: {
       no_repeat_30d: document.getElementById('global-no-repeat').checked,
-      proteins: [...document.querySelectorAll('[name=protein]:checked')].map(el => el.value),
-      cuisines: [...document.querySelectorAll('[name=cuisine]:checked')].map(el => el.value),
+      specific_cuts: selectedCuts,
+      cuisines: selectedCuisines,
+      dish_types: [],
     },
   };
 }
@@ -331,7 +347,9 @@ function applySettingsToForm(s) {
     btn.classList.toggle('active', btn.dataset.val === String(s.morning.count));
   });
   document.getElementById('morning-no-spicy').checked = Boolean(s.morning.no_spicy);
-  document.getElementById('morning-include-single').checked = Boolean(s.morning.include_single);
+  document.querySelectorAll('[name=morning-types]').forEach(cb => {
+    cb.checked = s.morning.dish_types ? s.morning.dish_types.includes(cb.value) : false;
+  });
 
   // Evening count
   document.querySelectorAll('[name=evening-count]').forEach(btn => {
@@ -339,20 +357,116 @@ function applySettingsToForm(s) {
   });
   document.getElementById('evening-no-spicy').checked = Boolean(s.evening.no_spicy);
   document.getElementById('evening-pair-soup').checked = Boolean(s.evening.pair_soup);
+  document.querySelectorAll('[name=evening-types]').forEach(cb => {
+    cb.checked = s.evening.dish_types ? s.evening.dish_types.includes(cb.value) : false;
+  });
 
   // Global preferences
   document.getElementById('global-no-repeat').checked = Boolean(s.global.no_repeat_30d);
 
-  document.querySelectorAll('[name=protein]').forEach(cb => {
-    cb.checked = s.global.proteins && s.global.proteins.includes(cb.value);
-  });
   document.querySelectorAll('[name=cuisine]').forEach(cb => {
-    cb.checked = s.global.cuisines && s.global.cuisines.includes(cb.value);
+    cb.checked = s.global.cuisines && s.global.cuisines.length ? s.global.cuisines.includes(cb.value) : true;
   });
+
+  // Specific cuts
+  document.querySelectorAll('[name=specific-cut]').forEach(cb => {
+    cb.checked = s.global.specific_cuts ? s.global.specific_cuts.includes(cb.value) : false;
+  });
+
+  updateCutsSummary();
 }
 
 function autoSaveSettings() {
   saveSettings(readFormSettings());
+  updateCutsSummary();
+}
+
+// ─── Granular Protein Cuts UI Builder ───────────────────────────────────────
+
+function renderCutsChips() {
+  const container = document.getElementById('cuts-chips-container');
+  if (!container) return;
+
+  const allMenus = getCombinedMenus(MENUS);
+  const savedSettings = loadSettings();
+  const selectedCuts = savedSettings.global.specific_cuts || [];
+
+  let html = '';
+
+  for (const [catKey, catData] of Object.entries(PROTEIN_CATEGORIES)) {
+    const isVisible = activeProteinCat === 'all' || activeProteinCat === catKey;
+    const hideClass = isVisible ? '' : 'style="display:none;"';
+
+    html += `<div class="cuts-category-group" data-cat="${catKey}" ${hideClass}>`;
+    html += `<div class="cuts-group-title">${catData.label}</div>`;
+    html += `<div class="chips-grid cuts-chips-grid">`;
+
+    catData.cuts.forEach(cut => {
+      // Calculate count of menus for this cut
+      const count = allMenus.filter(m => {
+        if (cut.id === 'ผัก') {
+          return (!m.protein_groups || m.protein_groups.length === 0) || (m.proteins && m.proteins.includes('ผัก'));
+        }
+        return (m.proteins && m.proteins.includes(cut.id)) || m.name.includes(cut.id);
+      }).length;
+
+      const isChecked = selectedCuts.includes(cut.id);
+
+      html += `
+        <label class="chip-item cut-chip-item">
+          <input type="checkbox" name="specific-cut" value="${cut.id}" ${isChecked ? 'checked' : ''} />
+          <span class="chip-label">
+            <span class="cut-name">${cut.label}</span>
+            <span class="cut-count">${count}</span>
+          </span>
+        </label>
+      `;
+    });
+
+    html += `</div></div>`;
+  }
+
+  container.innerHTML = html;
+
+  // Bind change listeners to newly rendered cut checkboxes
+  container.querySelectorAll('[name=specific-cut]').forEach(cb => {
+    cb.addEventListener('change', autoSaveSettings);
+  });
+}
+
+function updateCutsSummary() {
+  const summaryEl = document.getElementById('cuts-summary-badge');
+  if (!summaryEl) return;
+
+  const checkedCuts = [...document.querySelectorAll('[name=specific-cut]:checked')].map(el => el.value);
+  if (checkedCuts.length === 0) {
+    summaryEl.textContent = 'ทุกวัตถุดิบ (ไม่จำกัด)';
+    summaryEl.classList.remove('has-filter');
+  } else if (checkedCuts.length <= 3) {
+    summaryEl.textContent = `เจาะจง: ${checkedCuts.join(', ')}`;
+    summaryEl.classList.add('has-filter');
+  } else {
+    summaryEl.textContent = `เจาะจง ${checkedCuts.length} รายการ`;
+    summaryEl.classList.add('has-filter');
+  }
+}
+
+function renderNewMenuProteinOptions() {
+  const container = document.getElementById('new-menu-protein-options');
+  if (!container) return;
+
+  let html = '';
+  for (const [catKey, catData] of Object.entries(PROTEIN_CATEGORIES)) {
+    catData.cuts.forEach(cut => {
+      html += `
+        <label class="chip-item">
+          <input type="checkbox" name="new-cut" value="${cut.id}" />
+          <span class="chip-label">${cut.label}</span>
+        </label>
+      `;
+    });
+  }
+  container.innerHTML = html;
 }
 
 // ─── History Modal Controller ───────────────────────────────────────────────
@@ -382,7 +496,13 @@ function renderHistoryList(filterQuery = '') {
   if (!filtered.length) {
     container.innerHTML = `
       <div class="empty-state-card" style="padding: 32px 16px;">
-        <div class="empty-icon">${query ? '🔍' : '📋'}</div>
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
         <h4 class="empty-title">${query ? 'ไม่พบเมนูที่ค้นหา' : 'ยังไม่มีประวัติการสุ่ม'}</h4>
         <p class="empty-desc">${query ? 'ลองค้นหาด้วยคำอื่น' : 'เมื่อคุณกดสุ่มเมนู รายการจะถูกบันทึกไว้ที่นี่อัตโนมัติ'}</p>
       </div>
@@ -402,17 +522,17 @@ function renderHistoryList(filterQuery = '') {
   for (const [dayLabel, items] of Object.entries(groups)) {
     html += `<div class="hist-day-header">${dayLabel}</div>`;
     items.forEach(h => {
-      const mealIcon = h.meal === 'morning' ? '🌅' : '🌆';
+      const mealClass = h.meal === 'morning' ? 'morning-tag' : 'evening-tag';
       const mealText = h.meal === 'morning' ? 'มื้อเช้า' : 'มื้อเย็น';
       const timeStr = h.ts ? new Date(h.ts).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
 
       html += `
         <div class="hist-item-row" data-id="${h.id}" data-ts="${h.ts}">
           <div class="hist-item-content">
-            <span class="meal-badge-icon" title="${mealText}">${mealIcon}</span>
+            <span class="meal-tag-pill ${mealClass}">${mealText}</span>
             <div class="hist-item-details">
               <span class="hist-dish-name">${h.name}</span>
-              <span class="hist-time-tag">${mealText} ${timeStr ? '• ' + timeStr : ''}</span>
+              <span class="hist-time-tag">${timeStr}</span>
             </div>
           </div>
           <button type="button" class="btn-delete-row" data-id="${h.id}" data-ts="${h.ts}" title="ลบรายการนี้ออกจากประวัติ">
@@ -430,13 +550,13 @@ function renderHistoryList(filterQuery = '') {
 
   // Bind single item deletion
   container.querySelectorAll('.btn-delete-row').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', () => {
       const id = btn.dataset.id;
       const ts = btn.dataset.ts;
       removeHistoryItem(id, ts);
       renderHistoryList(document.getElementById('hist-search-input').value);
       updateHeaderCounts();
-      showToast('🗑️ ลบรายการออกจากประวัติแล้ว');
+      showToast('ลบรายการออกจากประวัติแล้ว');
     });
   });
 }
@@ -473,6 +593,9 @@ function renderCatalogList() {
   } else if (activeCatalogFilter.startsWith('type:')) {
     const type = activeCatalogFilter.split(':')[1];
     filtered = filtered.filter(m => m.dish_type === type);
+  } else if (activeCatalogFilter.startsWith('cut:')) {
+    const cut = activeCatalogFilter.split(':')[1];
+    filtered = filtered.filter(m => (m.proteins && m.proteins.includes(cut)) || m.name.includes(cut));
   }
 
   // Apply search query
@@ -481,7 +604,7 @@ function renderCatalogList() {
       const matchName = m.name.toLowerCase().includes(query);
       const matchCuisine = m.cuisine.toLowerCase().includes(query);
       const matchType = m.dish_type.toLowerCase().includes(query);
-      const matchProteins = (m.protein_groups || []).some(p => p.toLowerCase().includes(query));
+      const matchProteins = (m.proteins || []).some(p => p.toLowerCase().includes(query));
       return matchName || matchCuisine || matchType || matchProteins;
     });
   }
@@ -491,9 +614,15 @@ function renderCatalogList() {
   if (!filtered.length) {
     container.innerHTML = `
       <div class="empty-state-card" style="padding: 32px 16px;">
-        <div class="empty-icon">🍳</div>
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
         <h4 class="empty-title">ไม่พบเมนูที่ตรงกับเงื่อนไข</h4>
-        <p class="empty-desc">คุณสามารถกดปุ่ม "+ เพิ่มเมนูใหม่" ด้านบนเพื่อเพิ่มเข้าสู่ระบบได้เลย!</p>
+        <p class="empty-desc">คุณสามารถกดปุ่ม "เพิ่มเมนูใหม่" ด้านบนเพื่อเพิ่มเข้าสู่ระบบได้ทันที</p>
       </div>
     `;
     return;
@@ -502,10 +631,10 @@ function renderCatalogList() {
   container.innerHTML = filtered.map(m => {
     const typeClass = DISH_TYPE_CLASS[m.dish_type] || 'badge-type-side';
     const spicyBadge = m.spicy
-      ? '<span class="badge badge-spicy">🌶️ เผ็ด</span>'
-      : '<span class="badge badge-mild">🥬 ไม่เผ็ด</span>';
+      ? '<span class="badge badge-spicy"><span class="dot dot-red"></span>รสเผ็ด</span>'
+      : '<span class="badge badge-mild"><span class="dot dot-green"></span>ไม่เผ็ด</span>';
     const customBadge = m.is_custom
-      ? '<span class="badge badge-custom">⭐ เมนูของคุณ</span>'
+      ? '<span class="badge badge-custom">เมนูของคุณ</span>'
       : '';
     const deleteBtn = m.is_custom
       ? `
@@ -518,8 +647,8 @@ function renderCatalogList() {
       `
       : '';
 
-    const proteinBadges = (m.protein_groups || [])
-      .map(p => `<span class="badge badge-protein">${p}</span>`)
+    const cutBadges = (m.proteins && m.proteins.length ? m.proteins : m.protein_groups || [])
+      .map(p => `<span class="badge badge-cut">${p}</span>`)
       .join('');
 
     return `
@@ -530,10 +659,10 @@ function renderCatalogList() {
             ${customBadge}
           </div>
           <div class="badges-row">
-            <span class="badge badge-country">${CUISINE_FLAGS[m.cuisine] || m.cuisine}</span>
+            <span class="badge badge-country">${CUISINE_LABELS[m.cuisine] || m.cuisine}</span>
             <span class="badge ${typeClass}">${m.dish_type}</span>
             ${spicyBadge}
-            ${proteinBadges}
+            ${cutBadges}
           </div>
         </div>
         ${deleteBtn}
@@ -543,13 +672,14 @@ function renderCatalogList() {
 
   // Bind custom menu deletions
   container.querySelectorAll('.delete-custom-menu-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', () => {
       const id = btn.dataset.id;
       if (confirm('คุณต้องการลบเมนูนี้ออกจากระบบใช่หรือไม่?')) {
         deleteCustomMenu(id);
         renderCatalogList();
+        renderCutsChips();
         updateHeaderCounts();
-        showToast('🗑️ ลบเมนูออกจากระบบเรียบร้อย');
+        showToast('ลบเมนูออกจากระบบเรียบร้อย');
       }
     });
   });
@@ -581,7 +711,15 @@ function handleSaveNewMenu() {
   const dishType = document.getElementById('new-menu-type').value;
   const spicy = document.getElementById('new-menu-spicy').checked;
   const isPair = document.getElementById('new-menu-pair').checked;
-  const proteins = [...document.querySelectorAll('[name=new-protein]:checked')].map(el => el.value);
+  const selectedCuts = [...document.querySelectorAll('[name=new-cut]:checked')].map(el => el.value);
+
+  // Derive protein groups
+  const groups = new Set();
+  for (const [groupName, groupData] of Object.entries(PROTEIN_CATEGORIES)) {
+    if (groupData.cuts.some(c => selectedCuts.includes(c.id))) {
+      groups.add(groupName);
+    }
+  }
 
   const newMenu = {
     name,
@@ -589,8 +727,8 @@ function handleSaveNewMenu() {
     dish_type: dishType,
     spicy,
     is_pair: isPair,
-    proteins: proteins.length ? proteins : ['ผัก'],
-    protein_groups: proteins,
+    proteins: selectedCuts.length ? selectedCuts : ['ผัก'],
+    protein_groups: Array.from(groups),
   };
 
   addCustomMenu(newMenu);
@@ -599,13 +737,14 @@ function handleSaveNewMenu() {
   nameInput.value = '';
   document.getElementById('new-menu-spicy').checked = false;
   document.getElementById('new-menu-pair').checked = false;
-  document.querySelectorAll('[name=new-protein]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('[name=new-cut]').forEach(cb => cb.checked = false);
 
   // Close form & re-render
   document.getElementById('add-menu-form-panel').classList.remove('open');
   renderCatalogList();
+  renderCutsChips();
   updateHeaderCounts();
-  showToast(`🎉 เพิ่มเมนู "${name}" ลงในระบบสำเร็จ!`);
+  showToast(`เพิ่มเมนู "${name}" ลงในระบบสำเร็จ`);
 }
 
 // ─── Header Count Badges ───────────────────────────────────────────────────
@@ -624,6 +763,10 @@ function updateHeaderCounts() {
 // ─── Initialization & Event Binding ─────────────────────────────────────────
 
 function boot() {
+  // Render granular cuts chips
+  renderCutsChips();
+  renderNewMenuProteinOptions();
+
   // Load settings into form controls
   const settings = loadSettings();
   applySettingsToForm(settings);
@@ -639,12 +782,34 @@ function boot() {
     });
   });
 
-  // Auto-save on any checkbox change
+  // Checkbox changes for dish types and options
   document.querySelectorAll('input[type=checkbox]').forEach(el => {
     el.addEventListener('change', autoSaveSettings);
   });
 
-  // Quick Select All buttons for Protein & Cuisine chips
+  // Meat Category filter buttons
+  document.querySelectorAll('#protein-cat-tabs .cat-chip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#protein-cat-tabs .cat-chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeProteinCat = btn.dataset.cat;
+
+      // Toggle visibility of cut groups
+      document.querySelectorAll('.cuts-category-group').forEach(group => {
+        const match = activeProteinCat === 'all' || group.dataset.cat === activeProteinCat;
+        group.style.display = match ? 'block' : 'none';
+      });
+    });
+  });
+
+  // Clear specific cuts filter button
+  document.getElementById('btn-clear-cuts').addEventListener('click', () => {
+    document.querySelectorAll('[name=specific-cut]').forEach(cb => cb.checked = false);
+    autoSaveSettings();
+    showToast('ล้างการเลือกชิ้นส่วนเนื้อสัตว์แล้ว');
+  });
+
+  // Quick Select All buttons for Cuisine chips
   document.querySelectorAll('.quick-select-all').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.target;
@@ -661,7 +826,7 @@ function boot() {
     if (confirm('ต้องการคืนค่าตัวเลือกและเงื่อนไขกลับเป็นค่าเริ่มต้นหรือไม่?')) {
       saveSettings(DEFAULT_SETTINGS);
       applySettingsToForm(DEFAULT_SETTINGS);
-      showToast('↺ คืนค่าตัวเลือกเป็นค่าเริ่มต้นเรียบร้อย');
+      showToast('คืนค่าเริ่มต้นเรียบร้อย');
     }
   });
 
@@ -695,7 +860,7 @@ function boot() {
       clearHistory();
       renderHistoryList('');
       updateHeaderCounts();
-      showToast('🗑️ ล้างประวัติทั้งหมดแล้ว');
+      showToast('ล้างประวัติทั้งหมดแล้ว');
     }
   });
 

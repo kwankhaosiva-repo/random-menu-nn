@@ -8,8 +8,7 @@ export const DEFAULT_SETTINGS = {
   morning: {
     count:          2,
     no_spicy:       true,
-    dish_types:     ['กับข้าว'],      // จานเดียวต้องติ้กเพิ่ม
-    include_single: false,
+    dish_types:     ['กับข้าว'],
   },
   evening: {
     count:          2,
@@ -19,8 +18,10 @@ export const DEFAULT_SETTINGS = {
   },
   global: {
     no_repeat_30d:  true,
-    proteins:       [],               // [] = ไม่ filter (เอาทั้งหมด)
-    cuisines:       [],               // [] = ไม่ filter
+    proteins:       [],
+    specific_cuts:  [],
+    cuisines:       [],
+    dish_types:     [],
   },
 };
 
