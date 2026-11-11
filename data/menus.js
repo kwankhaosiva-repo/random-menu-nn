@@ -123,6 +123,7 @@ export const MENUS = [
   { id: "th_093", name: "แกงเผ็ดเป็ดย่าง",        cuisine: "ไทย", dish_type: "ต้ม/แกง",  proteins: ["เป็ด"],              protein_groups: ["เป็ด"],   spicy: true,  is_pair: false },
 
   // ─── ไทย: จานเดียว ──────────────────────────────────────────
+  { id: "th_139", name: "ข้าวหมูแดงหมูกรอบ",       cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูชิ้น","หมูกรอบ"], protein_groups: ["หมู"],   spicy: false, is_pair: false },
   { id: "th_100", name: "ข้าวมันไก่",             cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["ไก่"],               protein_groups: ["ไก่"],    spicy: false, is_pair: false },
   { id: "th_101", name: "ข้าวขาหมู",              cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: false, is_pair: false },
   { id: "th_102", name: "ข้าวหมกไก่",             cuisine: "ไทย", dish_type: "จานเดียว", proteins: ["ไก่"],               protein_groups: ["ไก่"],    spicy: false, is_pair: false },
@@ -179,7 +180,7 @@ export const MENUS = [
   { id: "cn_012", name: "เต้าหู้พะโล้หมู+ไข่",   cuisine: "จีน",  dish_type: "กับข้าว",  proteins: ["หมูชิ้น","ไข่"],     protein_groups: ["หมู","ไข่"],spicy: false, is_pair: false },
   { id: "cn_013", name: "ไก่มะนาวซีอิ๊ว",         cuisine: "จีน",  dish_type: "กับข้าว",  proteins: ["ไก่"],               protein_groups: ["ไก่"],    spicy: false, is_pair: false },
   { id: "cn_014", name: "ผัดวุ้นเส้นหมูสับ",      cuisine: "จีน",  dish_type: "กับข้าว",  proteins: ["หมูสับ"],            protein_groups: ["หมู"],    spicy: false, is_pair: false },
-  { id: "cn_015", name: "หมูแดงหมูกรอบ (ซื้อมาหั่น)",cuisine: "จีน", dish_type: "กับข้าว", proteins: ["หมูชิ้น","หมูกรอบ"], protein_groups: ["หมู"],   spicy: false, is_pair: false },
+  { id: "cn_015", name: "หมูสับนึ่งไข่เค็ม",      cuisine: "จีน",  dish_type: "กับข้าว",  proteins: ["หมูสับ","ไข่"],     protein_groups: ["หมู","ไข่"],spicy: false, is_pair: false },
 
   // จีน: ต้ม/แกง
   { id: "cn_020", name: "ซุปกิมจิหมู",            cuisine: "จีน",  dish_type: "ต้ม/แกง",  proteins: ["หมูชิ้น"],           protein_groups: ["หมู"],    spicy: true,  is_pair: true },
