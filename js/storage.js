@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS = {
     proteins:       [],
     specific_cuts:  [],
     cuisines:       [],
+    regions:        ['กลาง', 'อีสาน', 'เหนือ', 'ใต้'],
     dish_types:     [],
   },
 };

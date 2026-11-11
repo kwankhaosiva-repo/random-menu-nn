@@ -1,5 +1,5 @@
 // app.js — Core Random Logic & UI Controller (Professional UI/UX Version)
-import { MENUS, PROTEIN_CATEGORIES } from '../data/menus.js';
+import { MENUS, PROTEIN_CATEGORIES, THAI_REGIONS } from '../data/menus.js';
 import {
   loadSettings, saveSettings,
   loadHistory, addHistory, removeHistoryItem, removeHistoryById, clearHistory, isInHistory,
@@ -62,7 +62,7 @@ function loadSavedRollState() {
 function getEligibleMenus(slotSettings, globalSettings, excludeIds = []) {
   const allAvailable = getCombinedMenus(MENUS);
   const { no_spicy, dish_types } = slotSettings;
-  const { no_repeat_30d, specific_cuts, cuisines } = globalSettings;
+  const { no_repeat_30d, specific_cuts, cuisines, regions } = globalSettings;
 
   return allAvailable.filter(m => {
     // Exclude menus already shown or specifically excluded
@@ -78,6 +78,11 @@ function getEligibleMenus(slotSettings, globalSettings, excludeIds = []) {
 
     // Filter cuisine ([] = all)
     if (cuisines && cuisines.length && !cuisines.includes(m.cuisine)) return false;
+
+    // Filter region for Thai cuisine
+    if (m.cuisine === 'ไทย' && regions && regions.length > 0 && m.region) {
+      if (!regions.includes(m.region)) return false;
+    }
 
     // Filter granular protein cuts (if user selected specific cuts)
     if (specific_cuts && specific_cuts.length > 0) {
@@ -130,6 +135,13 @@ const CUISINE_LABELS = {
   ฝรั่ง: 'อาหารตะวันตก',
 };
 
+const REGION_CLASSES = {
+  กลาง: 'badge-region-central',
+  อีสาน: 'badge-region-isan',
+  เหนือ: 'badge-region-north',
+  ใต้: 'badge-region-south',
+};
+
 const DISH_TYPE_CLASS = {
   จานเดียว: 'badge-type-single',
   กับข้าว: 'badge-type-side',
@@ -148,6 +160,10 @@ function renderDishCard(menu, mealType) {
     ? '<span class="badge badge-custom">เมนูของคุณ</span>'
     : '';
 
+  const regionBadge = (menu.cuisine === 'ไทย' && menu.region)
+    ? `<span class="badge badge-region ${REGION_CLASSES[menu.region] || ''}">ภาค${menu.region}</span>`
+    : '';
+
   const cutBadges = (menu.proteins && menu.proteins.length ? menu.proteins : menu.protein_groups || [])
     .map(p => `<span class="badge badge-cut">${p}</span>`)
     .join('');
@@ -161,6 +177,7 @@ function renderDishCard(menu, mealType) {
         </div>
         <div class="badges-row">
           <span class="badge badge-country">${CUISINE_LABELS[menu.cuisine] || menu.cuisine}</span>
+          ${regionBadge}
           <span class="badge ${typeClass}">${menu.dish_type}</span>
           ${spicyBadge}
           ${cutBadges}
@@ -358,6 +375,7 @@ function readFormSettings() {
 
   const selectedCuts = [...document.querySelectorAll('[name=specific-cut]:checked')].map(el => el.value);
   const selectedCuisines = [...document.querySelectorAll('[name=cuisine]:checked')].map(el => el.value);
+  const selectedRegions = [...document.querySelectorAll('[name=thai-region]:checked')].map(el => el.value);
 
   return {
     morning: {
@@ -375,6 +393,7 @@ function readFormSettings() {
       no_repeat_30d: document.getElementById('global-no-repeat').checked,
       specific_cuts: selectedCuts,
       cuisines: selectedCuisines,
+      regions: selectedRegions,
       dish_types: [],
     },
   };
@@ -407,6 +426,11 @@ function applySettingsToForm(s) {
     cb.checked = s.global.cuisines && s.global.cuisines.length ? s.global.cuisines.includes(cb.value) : true;
   });
 
+  // Thai regions
+  document.querySelectorAll('[name=thai-region]').forEach(cb => {
+    cb.checked = s.global.regions && s.global.regions.length ? s.global.regions.includes(cb.value) : true;
+  });
+
   // Specific cuts
   document.querySelectorAll('[name=specific-cut]').forEach(cb => {
     cb.checked = s.global.specific_cuts ? s.global.specific_cuts.includes(cb.value) : false;
@@ -420,6 +444,8 @@ function checkIfSettingsAreDefault() {
   const current = readFormSettings();
   const def = DEFAULT_SETTINGS;
 
+  const hasAllRegions = !current.global.regions || current.global.regions.length === 4;
+
   const isDefault =
     current.morning.count === def.morning.count &&
     current.morning.no_spicy === def.morning.no_spicy &&
@@ -428,7 +454,8 @@ function checkIfSettingsAreDefault() {
     current.evening.no_spicy === def.evening.no_spicy &&
     current.evening.pair_soup === def.evening.pair_soup &&
     current.global.no_repeat_30d === def.global.no_repeat_30d &&
-    current.global.specific_cuts.length === 0;
+    current.global.specific_cuts.length === 0 &&
+    hasAllRegions;
 
   const defChk = document.getElementById('chk-use-default');
   if (defChk) defChk.checked = isDefault;
@@ -674,6 +701,9 @@ function renderCatalogList() {
   if (activeCatalogFilter.startsWith('cuisine:')) {
     const cuisine = activeCatalogFilter.split(':')[1];
     filtered = filtered.filter(m => m.cuisine === cuisine);
+  } else if (activeCatalogFilter.startsWith('region:')) {
+    const reg = activeCatalogFilter.split(':')[1];
+    filtered = filtered.filter(m => m.cuisine === 'ไทย' && m.region === reg);
   } else if (activeCatalogFilter.startsWith('type:')) {
     const type = activeCatalogFilter.split(':')[1];
     filtered = filtered.filter(m => m.dish_type === type);
@@ -687,9 +717,10 @@ function renderCatalogList() {
     filtered = filtered.filter(m => {
       const matchName = m.name.toLowerCase().includes(query);
       const matchCuisine = m.cuisine.toLowerCase().includes(query);
+      const matchRegion = m.region && (m.region.toLowerCase().includes(query) || `ภาค${m.region}`.toLowerCase().includes(query));
       const matchType = m.dish_type.toLowerCase().includes(query);
       const matchProteins = (m.proteins || []).some(p => p.toLowerCase().includes(query));
-      return matchName || matchCuisine || matchType || matchProteins;
+      return matchName || matchCuisine || matchRegion || matchType || matchProteins;
     });
   }
 
@@ -720,6 +751,9 @@ function renderCatalogList() {
     const customBadge = m.is_custom
       ? '<span class="badge badge-custom">เมนูของคุณ</span>'
       : '';
+    const regionBadge = (m.cuisine === 'ไทย' && m.region)
+      ? `<span class="badge badge-region ${REGION_CLASSES[m.region] || ''}">ภาค${m.region}</span>`
+      : '';
     const deleteBtn = m.is_custom
       ? `
         <button type="button" class="btn-delete-row delete-custom-menu-btn" data-id="${m.id}" title="ลบเมนูนี้ออกจากระบบ">
@@ -744,6 +778,7 @@ function renderCatalogList() {
           </div>
           <div class="badges-row">
             <span class="badge badge-country">${CUISINE_LABELS[m.cuisine] || m.cuisine}</span>
+            ${regionBadge}
             <span class="badge ${typeClass}">${m.dish_type}</span>
             ${spicyBadge}
             ${cutBadges}
@@ -792,6 +827,8 @@ function handleSaveNewMenu() {
   }
 
   const cuisine = document.getElementById('new-menu-cuisine').value;
+  const regionSelect = document.getElementById('new-menu-region');
+  const region = cuisine === 'ไทย' && regionSelect ? regionSelect.value : null;
   const dishType = document.getElementById('new-menu-type').value;
   const spicy = document.getElementById('new-menu-spicy').checked;
   // Automatically identify if dish is a soup/curry pair
@@ -809,6 +846,7 @@ function handleSaveNewMenu() {
   const newMenu = {
     name,
     cuisine,
+    region,
     dish_type: dishType,
     spicy,
     is_pair: isPair,
@@ -922,14 +960,17 @@ function boot() {
     showToast('ล้างการเลือกชิ้นส่วน (สุ่มได้ทุกวัตถุดิบ)');
   });
 
-  // Quick Select All buttons for Cuisine chips
+  // Quick Select All buttons for Cuisine & Region chips
   document.querySelectorAll('.quick-select-all').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.target;
       const cbs = document.querySelectorAll(`[name=${target}]`);
       const allChecked = [...cbs].every(cb => cb.checked);
       cbs.forEach(cb => cb.checked = !allChecked);
-      btn.textContent = allChecked ? 'เลือกทั้งหมด' : 'ยกเลิกทั้งหมด';
+      const isThaiRegion = target === 'thai-region';
+      btn.textContent = allChecked
+        ? (isThaiRegion ? 'เลือกทุกภาค' : 'เลือกทั้งหมด')
+        : (isThaiRegion ? 'ยกเลิกทุกภาค' : 'ยกเลิกทั้งหมด');
       autoSaveSettings();
     });
   });
@@ -1015,6 +1056,14 @@ function boot() {
   });
 
   document.getElementById('btn-save-new-menu').addEventListener('click', handleSaveNewMenu);
+
+  const newCuisineSelect = document.getElementById('new-menu-cuisine');
+  const regionWrap = document.getElementById('new-menu-region-wrap');
+  if (newCuisineSelect && regionWrap) {
+    newCuisineSelect.addEventListener('change', () => {
+      regionWrap.style.display = newCuisineSelect.value === 'ไทย' ? '' : 'none';
+    });
+  }
 
   // Global ESC key listener to close modals
   window.addEventListener('keydown', e => {

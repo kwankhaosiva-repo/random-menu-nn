@@ -306,6 +306,35 @@
       </div>
     </div>
 
+    <!-- Thai Regional Filter (กลาง, อีสาน, เหนือ, ใต้) -->
+    <div class="filter-block" id="thai-region-filter-block">
+      <div class="filter-label-row">
+        <div class="filter-label-title-wrap">
+          <span class="filter-name">ภูมิภาคอาหารไทย</span>
+          <span class="filter-hint-sub">เฉพาะอาหารไทย (เลือกเจาะจงภาคที่ชอบ หรือเลือกทุกภาค)</span>
+        </div>
+        <button type="button" class="quick-select-all" data-target="thai-region">เลือกทุกภาค</button>
+      </div>
+      <div class="chips-grid">
+        <label class="chip-item">
+          <input type="checkbox" name="thai-region" value="กลาง" checked />
+          <span class="chip-label"><span class="code-tag region-tag-c">กลาง</span> ภาคกลาง</span>
+        </label>
+        <label class="chip-item">
+          <input type="checkbox" name="thai-region" value="อีสาน" checked />
+          <span class="chip-label"><span class="code-tag region-tag-e">อีสาน</span> ภาคอีสาน</span>
+        </label>
+        <label class="chip-item">
+          <input type="checkbox" name="thai-region" value="เหนือ" checked />
+          <span class="chip-label"><span class="code-tag region-tag-n">เหนือ</span> ภาคเหนือ</span>
+        </label>
+        <label class="chip-item">
+          <input type="checkbox" name="thai-region" value="ใต้" checked />
+          <span class="chip-label"><span class="code-tag region-tag-s">ใต้</span> ภาคใต้</span>
+        </label>
+      </div>
+    </div>
+
     <!-- 30-day History Avoidance -->
     <div class="rule-switch-card">
       <label class="toggle-switch-label">
@@ -415,7 +444,11 @@
     <!-- Category filter tabs (Clean wrap without horizontal cutoff) -->
     <div class="catalog-filter-tabs" id="catalog-tabs">
       <button type="button" class="cat-tab active" data-filter="all">ทั้งหมด</button>
-      <button type="button" class="cat-tab" data-filter="cuisine:ไทย">ไทย</button>
+      <button type="button" class="cat-tab" data-filter="cuisine:ไทย">อาหารไทย</button>
+      <button type="button" class="cat-tab" data-filter="region:กลาง">ภาคกลาง</button>
+      <button type="button" class="cat-tab" data-filter="region:อีสาน">ภาคอีสาน</button>
+      <button type="button" class="cat-tab" data-filter="region:เหนือ">ภาคเหนือ</button>
+      <button type="button" class="cat-tab" data-filter="region:ใต้">ภาคใต้</button>
       <button type="button" class="cat-tab" data-filter="cuisine:จีน">จีน</button>
       <button type="button" class="cat-tab" data-filter="cuisine:ญี่ปุ่น">ญี่ปุ่น</button>
       <button type="button" class="cat-tab" data-filter="cuisine:ฝรั่ง">ตะวันตก</button>
@@ -443,6 +476,16 @@
               <option value="จีน">จีน</option>
               <option value="ญี่ปุ่น">ญี่ปุ่น</option>
               <option value="ฝรั่ง">ตะวันตก</option>
+            </select>
+          </div>
+
+          <div class="form-field flex-1" id="new-menu-region-wrap">
+            <label class="form-label" for="new-menu-region">ภาค (อาหารไทย)</label>
+            <select id="new-menu-region" class="form-select">
+              <option value="กลาง">ภาคกลาง</option>
+              <option value="อีสาน">ภาคอีสาน</option>
+              <option value="เหนือ">ภาคเหนือ</option>
+              <option value="ใต้">ภาคใต้</option>
             </select>
           </div>
 

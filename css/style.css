@@ -934,6 +934,18 @@ body {
   color: var(--text-muted);
 }
 
+.region-tag-c { background: #e2e8f0; color: #334155; }
+.region-tag-e { background: #fed7aa; color: #9a3412; }
+.region-tag-n { background: #bbf7d0; color: #166534; }
+.region-tag-s { background: #bfdbfe; color: #1e40af; }
+
+.filter-hint-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
 /* 30-day History Avoidance Switch */
 .rule-switch-card {
   background: var(--surface-alt);
@@ -1244,6 +1256,35 @@ body {
   background: var(--surface-alt);
   color: var(--text-muted);
   border: 1px solid var(--border);
+}
+
+.badge-region {
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
+.badge-region-central {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.badge-region-isan {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.badge-region-north {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-region-south {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 .badge-custom {
