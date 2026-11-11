@@ -7,6 +7,8 @@ import {
   DEFAULT_SETTINGS,
 } from './storage.js';
 
+const CURRENT_ROLL_KEY = 'rm_current_roll';
+
 // ─── State ──────────────────────────────────────────────────────────────────
 
 let currentMorning = [];
@@ -34,6 +36,25 @@ function showToast(message, duration = 2400) {
   toast._timer = setTimeout(() => {
     toast.classList.remove('show');
   }, duration);
+}
+
+function saveCurrentRollState() {
+  try {
+    localStorage.setItem(CURRENT_ROLL_KEY, JSON.stringify({
+      morning: currentMorning,
+      evening: currentEvening,
+    }));
+  } catch {}
+}
+
+function loadSavedRollState() {
+  try {
+    const raw = localStorage.getItem(CURRENT_ROLL_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 // ─── Filter Logic ───────────────────────────────────────────────────────────
@@ -146,7 +167,7 @@ function renderDishCard(menu, mealType) {
         </div>
       </div>
       <button type="button" class="btn-reroll-item" data-id="${menu.id}" data-meal="${mealType}" title="สุ่มเปลี่ยนเฉพาะเมนูนี้">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
           <path d="M3 3v5h5"></path>
           <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
@@ -182,7 +203,7 @@ function renderResults(morningMenus, eveningMenus) {
 
   if (morningMenus.length) {
     html += `
-      <div class="meal-result-group">
+      <div class="meal-result-group" id="group-morning">
         <div class="meal-result-header">
           <div class="meal-title-group">
             <span class="meal-indicator-bar morning-bar"></span>
@@ -199,7 +220,7 @@ function renderResults(morningMenus, eveningMenus) {
 
   if (eveningMenus.length) {
     html += `
-      <div class="meal-result-group">
+      <div class="meal-result-group" id="group-evening">
         <div class="meal-result-header">
           <div class="meal-title-group">
             <span class="meal-indicator-bar evening-bar"></span>
@@ -220,17 +241,17 @@ function renderResults(morningMenus, eveningMenus) {
   container.querySelectorAll('.btn-reroll-item').forEach(btn => {
     btn.addEventListener('click', handleIndividualReroll);
   });
-
-  // Smooth scroll into results view
-  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ─── Individual Reroll Handler ──────────────────────────────────────────────
+// ─── Individual Reroll Handler (IN-PLACE DOM REPLACEMENT ONLY) ──────────────
 
 function handleIndividualReroll(event) {
   const btn = event.currentTarget;
   const oldId = btn.dataset.id;
   const meal = btn.dataset.meal;
+  const cardEl = btn.closest('.result-dish-card');
+  if (!cardEl) return;
+
   const settings = readFormSettings();
 
   // 1. Remove the old menu from 30-day history so it won't be penalized
@@ -253,7 +274,7 @@ function handleIndividualReroll(event) {
 
   const replacement = shuffle(candidatePool)[0];
 
-  // 4. Update state
+  // 4. Update in-memory state
   if (meal === 'morning') {
     const idx = currentMorning.findIndex(m => m.id === oldId);
     if (idx !== -1) currentMorning[idx] = replacement;
@@ -265,10 +286,24 @@ function handleIndividualReroll(event) {
   // 5. Add new menu to history
   addHistory([{ id: replacement.id, name: replacement.name, meal }]);
 
-  // 6. Re-render results & update header counters
-  renderResults(currentMorning, currentEvening);
-  updateHeaderCounts();
-  showToast(`เปลี่ยนเป็น: ${replacement.name}`);
+  // 6. IN-PLACE DOM REPLACEMENT: Replace ONLY this single card element
+  // The rest of the page remains 100% untouched and static!
+  const temp = document.createElement('div');
+  temp.innerHTML = renderDishCard(replacement, meal);
+  const newCardEl = temp.firstElementChild;
+
+  // Add subtle exit animation on the old card
+  cardEl.classList.add('replacing-card');
+
+  setTimeout(() => {
+    cardEl.replaceWith(newCardEl);
+    // Bind reroll listener on the new replacement card
+    newCardEl.querySelector('.btn-reroll-item').addEventListener('click', handleIndividualReroll);
+    // Persist current displayed state in localStorage
+    saveCurrentRollState();
+    updateHeaderCounts();
+    showToast(`เปลี่ยนเป็น: ${replacement.name}`);
+  }, 120);
 }
 
 // ─── Main Random Roll Action ────────────────────────────────────────────────
@@ -303,9 +338,13 @@ function executeRandomRoll() {
 
   // 4. Render results & update header
   renderResults(morningList, eveningList);
+  saveCurrentRollState();
   updateHeaderCounts();
 
   showToast(`สุ่มเมนูสำเร็จ รวม ${morningList.length + eveningList.length} รายการ`);
+
+  // Scroll smoothly to results right below
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ─── Settings Form Read & Apply ─────────────────────────────────────────────
@@ -374,11 +413,39 @@ function applySettingsToForm(s) {
   });
 
   updateCutsSummary();
+  checkIfSettingsAreDefault();
+}
+
+function checkIfSettingsAreDefault() {
+  const current = readFormSettings();
+  const def = DEFAULT_SETTINGS;
+
+  const isDefault =
+    current.morning.count === def.morning.count &&
+    current.morning.no_spicy === def.morning.no_spicy &&
+    current.morning.dish_types.length === 1 && current.morning.dish_types[0] === 'กับข้าว' &&
+    current.evening.count === def.evening.count &&
+    current.evening.no_spicy === def.evening.no_spicy &&
+    current.evening.pair_soup === def.evening.pair_soup &&
+    current.global.no_repeat_30d === def.global.no_repeat_30d &&
+    current.global.specific_cuts.length === 0;
+
+  const defChk = document.getElementById('chk-use-default');
+  if (defChk) defChk.checked = isDefault;
 }
 
 function autoSaveSettings() {
   saveSettings(readFormSettings());
   updateCutsSummary();
+  checkIfSettingsAreDefault();
+}
+
+function resetToDefault() {
+  saveSettings(DEFAULT_SETTINGS);
+  applySettingsToForm(DEFAULT_SETTINGS);
+  const defChk = document.getElementById('chk-use-default');
+  if (defChk) defChk.checked = true;
+  showToast('คืนค่าเริ่มต้นเรียบร้อย');
 }
 
 // ─── Granular Protein Cuts UI Builder ───────────────────────────────────────
@@ -398,7 +465,12 @@ function renderCutsChips() {
     const hideClass = isVisible ? '' : 'style="display:none;"';
 
     html += `<div class="cuts-category-group" data-cat="${catKey}" ${hideClass}>`;
-    html += `<div class="cuts-group-title">${catData.label}</div>`;
+    html += `
+      <div class="cuts-group-header">
+        <span class="cuts-group-title">${catData.label}</span>
+        <button type="button" class="btn-select-group" data-cat="${catKey}">เลือกทั้งหมวดนี้</button>
+      </div>
+    `;
     html += `<div class="chips-grid cuts-chips-grid">`;
 
     catData.cuts.forEach(cut => {
@@ -414,7 +486,7 @@ function renderCutsChips() {
 
       html += `
         <label class="chip-item cut-chip-item">
-          <input type="checkbox" name="specific-cut" value="${cut.id}" ${isChecked ? 'checked' : ''} />
+          <input type="checkbox" name="specific-cut" data-cat="${catKey}" value="${cut.id}" ${isChecked ? 'checked' : ''} />
           <span class="chip-label">
             <span class="cut-name">${cut.label}</span>
             <span class="cut-count">${count}</span>
@@ -432,6 +504,18 @@ function renderCutsChips() {
   container.querySelectorAll('[name=specific-cut]').forEach(cb => {
     cb.addEventListener('change', autoSaveSettings);
   });
+
+  // Bind "เลือกทั้งหมวดนี้" button
+  container.querySelectorAll('.btn-select-group').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const catKey = btn.dataset.cat;
+      const cbs = container.querySelectorAll(`[name=specific-cut][data-cat="${catKey}"]`);
+      const allChecked = [...cbs].every(cb => cb.checked);
+      cbs.forEach(cb => cb.checked = !allChecked);
+      btn.textContent = allChecked ? 'เลือกทั้งหมวดนี้' : 'ยกเลิกหมวดนี้';
+      autoSaveSettings();
+    });
+  });
 }
 
 function updateCutsSummary() {
@@ -446,7 +530,7 @@ function updateCutsSummary() {
     summaryEl.textContent = `เจาะจง: ${checkedCuts.join(', ')}`;
     summaryEl.classList.add('has-filter');
   } else {
-    summaryEl.textContent = `เจาะจง ${checkedCuts.length} รายการ`;
+    summaryEl.textContent = `เจาะจง ${checkedCuts.length} ชิ้นส่วน`;
     summaryEl.classList.add('has-filter');
   }
 }
@@ -710,7 +794,8 @@ function handleSaveNewMenu() {
   const cuisine = document.getElementById('new-menu-cuisine').value;
   const dishType = document.getElementById('new-menu-type').value;
   const spicy = document.getElementById('new-menu-spicy').checked;
-  const isPair = document.getElementById('new-menu-pair').checked;
+  // Automatically identify if dish is a soup/curry pair
+  const isPair = dishType === 'ต้ม/แกง';
   const selectedCuts = [...document.querySelectorAll('[name=new-cut]:checked')].map(el => el.value);
 
   // Derive protein groups
@@ -736,7 +821,6 @@ function handleSaveNewMenu() {
   // Reset form
   nameInput.value = '';
   document.getElementById('new-menu-spicy').checked = false;
-  document.getElementById('new-menu-pair').checked = false;
   document.querySelectorAll('[name=new-cut]').forEach(cb => cb.checked = false);
 
   // Close form & re-render
@@ -772,6 +856,14 @@ function boot() {
   applySettingsToForm(settings);
   updateHeaderCounts();
 
+  // Restore saved roll state from session if available
+  const savedRoll = loadSavedRollState();
+  if (savedRoll && (savedRoll.morning?.length || savedRoll.evening?.length)) {
+    currentMorning = savedRoll.morning || [];
+    currentEvening = savedRoll.evening || [];
+    renderResults(currentMorning, currentEvening);
+  }
+
   // Segmented control buttons for meal count
   document.querySelectorAll('.segment-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -786,6 +878,20 @@ function boot() {
   document.querySelectorAll('input[type=checkbox]').forEach(el => {
     el.addEventListener('change', autoSaveSettings);
   });
+
+  // Quick Default Toggle Checkbox
+  const defaultToggle = document.getElementById('chk-use-default');
+  if (defaultToggle) {
+    defaultToggle.addEventListener('change', e => {
+      if (e.target.checked) {
+        resetToDefault();
+      }
+    });
+  }
+
+  // Quick Reset buttons
+  document.getElementById('btn-quick-reset').addEventListener('click', resetToDefault);
+  document.getElementById('btn-reset-defaults').addEventListener('click', resetToDefault);
 
   // Meat Category filter buttons
   document.querySelectorAll('#protein-cat-tabs .cat-chip-btn').forEach(btn => {
@@ -802,11 +908,18 @@ function boot() {
     });
   });
 
+  // Select All Cuts Button
+  document.getElementById('btn-select-all-cuts').addEventListener('click', () => {
+    document.querySelectorAll('[name=specific-cut]').forEach(cb => cb.checked = true);
+    autoSaveSettings();
+    showToast('เลือกทุกวัตถุดิบและชิ้นส่วนแล้ว');
+  });
+
   // Clear specific cuts filter button
   document.getElementById('btn-clear-cuts').addEventListener('click', () => {
     document.querySelectorAll('[name=specific-cut]').forEach(cb => cb.checked = false);
     autoSaveSettings();
-    showToast('ล้างการเลือกชิ้นส่วนเนื้อสัตว์แล้ว');
+    showToast('ล้างการเลือกชิ้นส่วน (สุ่มได้ทุกวัตถุดิบ)');
   });
 
   // Quick Select All buttons for Cuisine chips
@@ -819,15 +932,6 @@ function boot() {
       btn.textContent = allChecked ? 'เลือกทั้งหมด' : 'ยกเลิกทั้งหมด';
       autoSaveSettings();
     });
-  });
-
-  // Reset Defaults Button
-  document.getElementById('btn-reset-defaults').addEventListener('click', () => {
-    if (confirm('ต้องการคืนค่าตัวเลือกและเงื่อนไขกลับเป็นค่าเริ่มต้นหรือไม่?')) {
-      saveSettings(DEFAULT_SETTINGS);
-      applySettingsToForm(DEFAULT_SETTINGS);
-      showToast('คืนค่าเริ่มต้นเรียบร้อย');
-    }
   });
 
   // Hero Random Button
