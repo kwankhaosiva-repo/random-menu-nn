@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍽️ สุ่มเมนูอาหาร</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ─── Header ─────────────────────────────────────────────── -->
+<header>
+  <div class="app-title">🍽️ สุ่มเมนู <span>วันนี้กินอะไรดี?</span></div>
+  <button class="btn-history" id="btn-history">📋 ประวัติ</button>
+</header>
+
+<!-- ─── Main ────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Slot cards: เช้า + เย็น -->
+  <div class="slot-cards">
+
+    <!-- มื้อเช้า -->
+    <div class="slot-card morning">
+      <div class="slot-title">🌅 มื้อเช้า</div>
+
+      <div class="count-row">
+        <button class="count-btn" name="morning-count" data-val="1">1</button>
+        <button class="count-btn active" name="morning-count" data-val="2">2</button>
+        <button class="count-btn" name="morning-count" data-val="3">3</button>
+        <button class="count-btn" name="morning-count" data-val="4">4</button>
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle-label">
+          <input type="checkbox" id="morning-no-spicy" checked />
+          🌶️ ไม่เผ็ด
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="morning-include-single" />
+          🍜 รวมจานเดียว
+        </label>
+      </div>
+    </div>
+
+    <!-- มื้อเย็น -->
+    <div class="slot-card evening">
+      <div class="slot-title">🌆 มื้อเย็น</div>
+
+      <div class="count-row">
+        <button class="count-btn" name="evening-count" data-val="1">1</button>
+        <button class="count-btn active" name="evening-count" data-val="2">2</button>
+        <button class="count-btn" name="evening-count" data-val="3">3</button>
+        <button class="count-btn" name="evening-count" data-val="4">4</button>
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle-label">
+          <input type="checkbox" id="evening-no-spicy" />
+          🌶️ ไม่เผ็ด
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="evening-pair-soup" />
+          🍲 เพิ่มต้ม/แกงคู่
+        </label>
+      </div>
+    </div>
+
+  </div><!-- /slot-cards -->
+
+  <!-- Random button -->
+  <div class="btn-random-wrap">
+    <button id="btn-random">🎲 สุ่มเมนู!</button>
+  </div>
+
+  <!-- Results zone -->
+  <div id="results"></div>
+
+  <!-- Settings toggle -->
+  <div class="settings-toggle-wrap">
+    <button id="btn-settings-toggle">⚙️ Config</button>
+  </div>
+
+  <!-- Settings panel (collapsible) -->
+  <div id="settings-panel">
+
+    <!-- วัตถุดิบ -->
+    <div class="setting-section">
+      <h3>🥩 วัตถุดิบหลัก (ไม่เลือก = เอาทั้งหมด)</h3>
+      <div class="protein-grid">
+        <label class="chip-label"><input type="checkbox" name="protein" value="หมู" /> 🐷 หมู</label>
+        <label class="chip-label"><input type="checkbox" name="protein" value="ไก่" /> 🐔 ไก่</label>
+        <label class="chip-label"><input type="checkbox" name="protein" value="เนื้อ" /> 🐄 เนื้อ</label>
+        <label class="chip-label"><input type="checkbox" name="protein" value="ทะเล" /> 🦐 ทะเล</label>
+        <label class="chip-label"><input type="checkbox" name="protein" value="ไข่" /> 🥚 ไข่</label>
+        <label class="chip-label"><input type="checkbox" name="protein" value="เป็ด" /> 🦆 เป็ด</label>
+        <label class="chip-label"><input type="checkbox" name="protein" value="ผัก" /> 🌿 ผัก/ไม่มีเนื้อ</label>
+      </div>
+    </div>
+
+    <!-- สัญชาติ -->
+    <div class="setting-section">
+      <h3>🌍 ประเทศอาหาร (ไม่เลือก = เอาทั้งหมด)</h3>
+      <div class="cuisine-grid">
+        <label class="chip-label"><input type="checkbox" name="cuisine" value="ไทย" /> 🇹🇭 ไทย</label>
+        <label class="chip-label"><input type="checkbox" name="cuisine" value="จีน" /> 🇨🇳 จีน</label>
+        <label class="chip-label"><input type="checkbox" name="cuisine" value="ญี่ปุ่น" /> 🇯🇵 ญี่ปุ่น</label>
+        <label class="chip-label"><input type="checkbox" name="cuisine" value="ฝรั่ง" /> 🌍 ฝรั่ง</label>
+      </div>
+    </div>
+
+    <!-- Global options -->
+    <div class="setting-section">
+      <h3>⚙️ ตัวเลือกทั่วไป</h3>
+      <div class="global-toggle">
+        <label>
+          <input type="checkbox" id="global-no-repeat" checked />
+          🔁 ไม่ซ้ำภายใน 30 วัน
+        </label>
+      </div>
+    </div>
+
+    <button id="btn-reset-settings">↩️ รีเซ็ตค่า default</button>
+
+  </div><!-- /settings-panel -->
+
+</main><!-- /main -->
+
+<!-- ─── History Modal ───────────────────────────────────────── -->
+<div id="history-modal" role="dialog" aria-modal="true" aria-label="ประวัติการสุ่ม">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2>📋 ประวัติการสุ่ม (30 วัน)</h2>
+      <button id="history-close" aria-label="ปิด">✕</button>
+    </div>
+    <div id="history-list"></div>
+    <div class="modal-footer">
+      <button id="btn-clear-history">🗑️ ล้างประวัติทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
