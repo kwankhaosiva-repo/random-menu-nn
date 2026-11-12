@@ -782,6 +782,51 @@ body {
   text-decoration: underline;
 }
 
+/* ─── Nested Sub-filter Block (Thai regions subset of Thai cuisine) ─── */
+.sub-filter-block {
+  margin-top: 6px;
+  padding: 12px 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.sub-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sub-filter-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sub-filter-title svg {
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+}
+
+.disabled-sub-block {
+  opacity: 0.38;
+  pointer-events: none;
+  filter: grayscale(0.65);
+  user-select: none;
+  border-left-color: var(--border);
+}
+
 /* Category Filter Tabs */
 .category-tabs-row {
   display: flex;

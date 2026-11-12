@@ -77,11 +77,12 @@ function getEligibleBaseMenus(slotSettings, globalSettings, excludeBaseIds = [])
     if (no_spicy && b.spicy) return false;
 
     // Filter cuisine
-    if (cuisines && cuisines.length && !cuisines.includes(b.cuisine)) return false;
+    if (cuisines && (!cuisines.includes(b.cuisine) || cuisines.length === 0)) return false;
 
-    // Filter region for Thai cuisine
-    if (b.cuisine === 'ไทย' && regions && regions.length > 0 && b.region) {
-      if (!regions.includes(b.region)) return false;
+    // Filter region for Thai cuisine (Thai regions are strictly a subset of Thai cuisine)
+    if (b.cuisine === 'ไทย') {
+      if (!regions || regions.length === 0) return false;
+      if (b.region && !regions.includes(b.region)) return false;
     }
 
     // Filter specific meat cuts:
@@ -513,6 +514,55 @@ function readFormSettings() {
   };
 }
 
+function syncThaiCuisineAndRegions(triggeredBy = 'cuisine') {
+  const thaiCuisineCb = document.getElementById('chk-cuisine-thai') || document.querySelector('[name=cuisine][value="ไทย"]');
+  const regionBlock = document.getElementById('thai-region-filter-block');
+  const regionCbs = [...document.querySelectorAll('[name=thai-region]')];
+  const btnRegionAll = document.getElementById('btn-select-all-thai-regions');
+  if (!thaiCuisineCb || !regionBlock) return;
+
+  if (triggeredBy === 'cuisine') {
+    const isThaiChecked = thaiCuisineCb.checked;
+    regionBlock.classList.toggle('disabled-sub-block', !isThaiChecked);
+    regionCbs.forEach(cb => {
+      cb.disabled = !isThaiChecked;
+      if (!isThaiChecked) {
+        cb.checked = false;
+      }
+    });
+    if (isThaiChecked) {
+      const anyChecked = regionCbs.some(cb => cb.checked);
+      if (!anyChecked) {
+        regionCbs.forEach(cb => cb.checked = true);
+      }
+    }
+    const allChecked = regionCbs.every(cb => cb.checked);
+    if (btnRegionAll) {
+      btnRegionAll.textContent = allChecked ? 'ยกเลิกทุกภาค' : 'เลือกทุกภาค';
+    }
+  } else if (triggeredBy === 'region') {
+    const checkedCount = regionCbs.filter(cb => cb.checked).length;
+    if (checkedCount > 0) {
+      thaiCuisineCb.checked = true;
+      regionBlock.classList.remove('disabled-sub-block');
+      regionCbs.forEach(cb => cb.disabled = false);
+      if (btnRegionAll) {
+        btnRegionAll.textContent = checkedCount === regionCbs.length ? 'ยกเลิกทุกภาค' : 'เลือกทุกภาค';
+      }
+    } else {
+      thaiCuisineCb.checked = false;
+      regionBlock.classList.add('disabled-sub-block');
+      regionCbs.forEach(cb => {
+        cb.checked = false;
+        cb.disabled = true;
+      });
+      if (btnRegionAll) {
+        btnRegionAll.textContent = 'เลือกทุกภาค';
+      }
+    }
+  }
+}
+
 function applySettingsToForm(s) {
   // Morning count
   document.querySelectorAll('[name=morning-count]').forEach(btn => {
@@ -553,6 +603,7 @@ function applySettingsToForm(s) {
     cb.checked = s.global.specific_cuts ? s.global.specific_cuts.includes(cb.value) : false;
   });
 
+  syncThaiCuisineAndRegions('cuisine');
   updateCutsSummary();
   checkIfSettingsAreDefault();
 }
@@ -1094,6 +1145,29 @@ function boot() {
       btn.textContent = allChecked
         ? (isThaiRegion ? 'เลือกทุกภาค' : 'เลือกทั้งหมด')
         : (isThaiRegion ? 'ยกเลิกทุกภาค' : 'ยกเลิกทั้งหมด');
+
+      if (target === 'cuisine') {
+        syncThaiCuisineAndRegions('cuisine');
+      } else if (target === 'thai-region') {
+        syncThaiCuisineAndRegions('region');
+      }
+
+      autoSaveSettings();
+    });
+  });
+
+  // Thai Cuisine and Region synchronization
+  const thaiCuisineCb = document.getElementById('chk-cuisine-thai') || document.querySelector('[name=cuisine][value="ไทย"]');
+  if (thaiCuisineCb) {
+    thaiCuisineCb.addEventListener('change', () => {
+      syncThaiCuisineAndRegions('cuisine');
+      autoSaveSettings();
+    });
+  }
+
+  document.querySelectorAll('[name=thai-region]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      syncThaiCuisineAndRegions('region');
       autoSaveSettings();
     });
   });
