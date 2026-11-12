@@ -530,7 +530,6 @@
       <button type="button" class="cat-tab" data-filter="type:จานเดียว">อาหารจานเดียว</button>
       <button type="button" class="cat-tab" data-filter="type:กับข้าว">กับข้าว</button>
       <button type="button" class="cat-tab" data-filter="type:ต้ม/แกง">ต้ม / แกง</button>
-      <button type="button" class="cat-tab" data-filter="cut:หมูกรอบ">หมูกรอบ</button>
     </div>
 
     <!-- Inline Add Menu Form (Collapsible) -->
@@ -608,6 +607,39 @@
       <span class="footer-stat" id="catalog-footer-stat">กำลังประมวลผล...</span>
       <button type="button" class="btn-secondary" id="btn-catalog-close-bottom">ปิดหน้าต่าง</button>
     </div>
+  </div>
+</div>
+
+<!-- ─── Custom Context Menu for Protein Chips ──────────────── -->
+<div id="cut-context-menu" class="custom-context-menu" style="display: none;" role="menu">
+  <div class="context-menu-header">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <path d="M16 10a4 4 0 0 1-8 0"></path>
+    </svg>
+    <span class="context-menu-title" id="ctx-menu-title">วัตถุดิบ</span>
+  </div>
+  <div class="context-menu-body">
+    <button type="button" class="context-menu-item" id="ctx-action-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <div class="ctx-item-text">
+        <span class="ctx-action-title">ค้นหาเมนูในคลังอาหาร</span>
+        <small class="ctx-item-desc" id="ctx-search-desc">ดูรายการเมนูทั้งหมดที่มีวัตถุดิบนี้</small>
+      </div>
+    </button>
+    <button type="button" class="context-menu-item" id="ctx-action-select-only">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <div class="ctx-item-text">
+        <span class="ctx-action-title">เลือกสุ่มเฉพาะวัตถุดิบนี้</span>
+        <small class="ctx-item-desc">ล้างวัตถุดิบอื่นและเลือกตัวนี้อันเดียว</small>
+      </div>
+    </button>
   </div>
 </div>
 

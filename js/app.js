@@ -678,7 +678,40 @@ function resetToDefault() {
   showToast('คืนค่าเริ่มต้นเรียบร้อย');
 }
 
-// ─── Granular Protein Cuts UI Builder ───────────────────────────────────────
+// ─── Granular Protein Cuts UI Builder & Context Menu ────────────────────────
+
+let currentContextCut = null;
+
+function showCutContextMenu(x, y, cutId, cutLabel, catKey) {
+  currentContextCut = { cutId, cutLabel, catKey };
+  const menu = document.getElementById('cut-context-menu');
+  if (!menu) return;
+
+  const titleEl = document.getElementById('ctx-menu-title');
+  if (titleEl) titleEl.textContent = `วัตถุดิบ: ${cutLabel}`;
+
+  const descEl = document.getElementById('ctx-search-desc');
+  if (descEl) descEl.textContent = `ดูรายการเมนูทั้งหมดที่มี ${cutLabel} ในคลัง`;
+
+  menu.style.display = 'block';
+  const rect = menu.getBoundingClientRect();
+  let posX = x;
+  let posY = y;
+  if (posX + rect.width > window.innerWidth - 10) {
+    posX = window.innerWidth - rect.width - 10;
+  }
+  if (posY + rect.height > window.innerHeight - 10) {
+    posY = window.innerHeight - rect.height - 10;
+  }
+  menu.style.left = `${posX}px`;
+  menu.style.top = `${posY}px`;
+}
+
+function hideCutContextMenu() {
+  const menu = document.getElementById('cut-context-menu');
+  if (menu) menu.style.display = 'none';
+  currentContextCut = null;
+}
 
 function renderCutsChips() {
   const container = document.getElementById('cuts-chips-container');
@@ -716,7 +749,7 @@ function renderCutsChips() {
       const isChecked = selectedCuts.includes(cut.id);
 
       html += `
-        <label class="chip-item cut-chip-item">
+        <label class="chip-item cut-chip-item" data-cut-id="${cut.id}" data-cut-label="${cut.label}" data-cat="${catKey}" title="คลิกเลือก / คลิกขวาเพื่อค้นหาในคลังอาหาร">
           <input type="checkbox" name="specific-cut" data-cat="${catKey}" value="${cut.id}" ${isChecked ? 'checked' : ''} />
           <span class="chip-label">
             <span class="cut-name">${cut.label}</span>
@@ -734,6 +767,17 @@ function renderCutsChips() {
   // Bind change listeners to newly rendered cut checkboxes
   container.querySelectorAll('[name=specific-cut]').forEach(cb => {
     cb.addEventListener('change', autoSaveSettings);
+  });
+
+  // Bind right-click context menu to cut chips
+  container.querySelectorAll('.cut-chip-item').forEach(item => {
+    item.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const cutId = item.dataset.cutId;
+      const cutLabel = item.dataset.cutLabel;
+      const catKey = item.dataset.cat;
+      showCutContextMenu(e.clientX, e.clientY, cutId, cutLabel, catKey);
+    });
   });
 
   // Bind "เลือกทั้งหมวดนี้" button
@@ -933,7 +977,11 @@ function renderCatalogList() {
       const matchCuisine = m.cuisine.toLowerCase().includes(query);
       const matchRegion = m.region && (m.region.toLowerCase().includes(query) || `ภาค${m.region}`.toLowerCase().includes(query));
       const matchType = m.dish_type.toLowerCase().includes(query);
-      const matchProteins = (m.proteins || []).some(p => p.toLowerCase().includes(query));
+      const matchProteins = (m.proteins || []).some(p => {
+        if (query === 'มังสวิรัติ' && (p === 'ผัก' || p === 'เต้าหู้')) return true;
+        if (query === 'ผัก' && (p === 'ผัก' || p === 'เต้าหู้' || p === 'เห็ด')) return true;
+        return p.toLowerCase().includes(query);
+      });
       return matchName || matchCuisine || matchRegion || matchType || matchProteins;
     });
   }
@@ -1018,13 +1066,19 @@ function renderCatalogList() {
   });
 }
 
-function openCatalogModal() {
+function openCatalogModal(initialQuery = '') {
   const modal = document.getElementById('catalog-modal');
   const searchInput = document.getElementById('catalog-search-input');
-  searchInput.value = '';
+  searchInput.value = initialQuery;
+  const wrap = searchInput.closest('.search-input-wrap');
+  if (wrap) wrap.classList.toggle('has-value', Boolean(initialQuery));
   document.getElementById('add-menu-form-panel').classList.remove('open');
   renderCatalogList();
   modal.classList.add('open');
+  if (initialQuery) {
+    searchInput.focus();
+    searchInput.select();
+  }
 }
 
 function closeCatalogModal() {
@@ -1370,11 +1424,52 @@ function boot() {
   // Global ESC key listener to close modals
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
+      hideCutContextMenu();
       closeConfigModal();
       closeHistoryModal();
       closeCatalogModal();
     }
   });
+
+  // Context Menu Actions for Protein Chips
+  const ctxSearchBtn = document.getElementById('ctx-action-search');
+  if (ctxSearchBtn) {
+    ctxSearchBtn.addEventListener('click', () => {
+      if (!currentContextCut) return;
+      const { cutId, cutLabel } = currentContextCut;
+      hideCutContextMenu();
+      closeConfigModal();
+      document.querySelectorAll('#catalog-tabs .cat-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.filter === 'all');
+      });
+      activeCatalogFilter = 'all';
+      openCatalogModal(cutId);
+      showToast(`ค้นหาเมนูวัตถุดิบ "${cutLabel}" ในคลังอาหาร`);
+    });
+  }
+
+  const ctxSelectOnlyBtn = document.getElementById('ctx-action-select-only');
+  if (ctxSelectOnlyBtn) {
+    ctxSelectOnlyBtn.addEventListener('click', () => {
+      if (!currentContextCut) return;
+      const { cutId, cutLabel } = currentContextCut;
+      hideCutContextMenu();
+      document.querySelectorAll('[name=specific-cut]').forEach(cb => {
+        cb.checked = (cb.value === cutId);
+      });
+      autoSaveSettings();
+      showToast(`เลือกเฉพาะ "${cutLabel}" สำหรับการสุ่มแล้ว`);
+    });
+  }
+
+  // Dismiss context menu on click outside or scroll
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#cut-context-menu')) {
+      hideCutContextMenu();
+    }
+  });
+
+  window.addEventListener('scroll', hideCutContextMenu, true);
 }
 
 document.addEventListener('DOMContentLoaded', boot);
