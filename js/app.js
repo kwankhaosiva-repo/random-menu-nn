@@ -1129,8 +1129,8 @@ function boot() {
     });
   });
 
-  // Checkbox changes for dish types and options
-  document.querySelectorAll('input[type=checkbox]').forEach(el => {
+  // Checkbox changes for dish types and options (only inside config modal)
+  document.querySelectorAll('#config-modal input[type=checkbox]').forEach(el => {
     el.addEventListener('change', autoSaveSettings);
   });
 
@@ -1140,6 +1140,9 @@ function boot() {
     defaultToggle.addEventListener('change', e => {
       if (e.target.checked) {
         resetToDefault();
+      } else {
+        openConfigModal();
+        showToast('เลือกปรับแต่งเงื่อนไขตามต้องการ');
       }
     });
   }
