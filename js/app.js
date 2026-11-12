@@ -122,27 +122,46 @@ function pickProteinForBase(baseDish, specific_cuts = [], excludeProtein = null)
 }
 
 function pickMultiple(slotSettings, globalSettings, excludeBaseIds = [], ensurePairSoup = false) {
-  let pool = getEligibleBaseMenus(slotSettings, globalSettings, excludeBaseIds);
   const count = slotSettings.count;
-  if (!pool.length || count <= 0) return [];
+  if (count <= 0) return [];
 
-  pool = shuffle(pool);
+  const currentExclude = [...excludeBaseIds];
   const pickedBases = [];
 
-  // Guarantee soup/curry dish if requested and available
+  // 1. Guarantee soup/curry dish if requested (การันตีต้มจืดหรือแกง)
   if (ensurePairSoup) {
-    const soupIndex = pool.findIndex(b => b.dish_type === 'ต้ม/แกง' || b.is_pair);
-    if (soupIndex !== -1) {
-      pickedBases.push(pool.splice(soupIndex, 1)[0]);
+    // Specifically query for soup dishes regardless of what general dish_types were selected
+    const soupSettings = {
+      ...slotSettings,
+      dish_types: ['ต้ม/แกง'],
+    };
+    const soupCandidates = shuffle(getEligibleBaseMenus(soupSettings, globalSettings, currentExclude));
+    if (soupCandidates.length > 0) {
+      const pickedSoup = soupCandidates[0];
+      pickedBases.push(pickedSoup);
+      currentExclude.push(pickedSoup.id);
     }
   }
 
-  // Fill remaining needed dishes
-  while (pickedBases.length < count && pool.length > 0) {
-    pickedBases.push(pool.pop());
+  // 2. Fill remaining dishes (count - pickedBases.length)
+  const remainingCount = count - pickedBases.length;
+  if (remainingCount > 0) {
+    let regularCandidates = shuffle(getEligibleBaseMenus(slotSettings, globalSettings, currentExclude));
+
+    // Fallback: If regular candidates are insufficient, relax dish_types constraint
+    if (regularCandidates.length < remainingCount) {
+      const relaxedSettings = { ...slotSettings, dish_types: [] };
+      regularCandidates = shuffle(getEligibleBaseMenus(relaxedSettings, globalSettings, currentExclude));
+    }
+
+    while (pickedBases.length < count && regularCandidates.length > 0) {
+      const picked = regularCandidates.pop();
+      pickedBases.push(picked);
+      currentExclude.push(picked.id);
+    }
   }
 
-  // Resolve each base dish with a selected protein
+  // 3. Resolve each base dish with a selected protein
   return pickedBases.map(b => {
     const protein = pickProteinForBase(b, globalSettings.specific_cuts || []);
     return resolveDish(b, protein);
@@ -327,7 +346,17 @@ function handleRerollDish(event) {
 
   // 3. Pick replacement base dish
   const slotSettings = meal === 'morning' ? settings.morning : settings.evening;
-  const candidateBases = getEligibleBaseMenus(slotSettings, settings.global, currentDisplayedBaseIds);
+  const currentList = meal === 'morning' ? currentMorning : currentEvening;
+  const oldDish = currentList.find(m => m.id === oldId || m.baseId === oldBaseId);
+  const isSoupDish = oldDish && (oldDish.dish_type === 'ต้ม/แกง' || oldDish.is_pair);
+
+  let rerollSettings = slotSettings;
+  // If this meal requires a guaranteed soup and this was the soup dish, replace it with another soup!
+  if (slotSettings.pair_soup && isSoupDish) {
+    rerollSettings = { ...slotSettings, dish_types: ['ต้ม/แกง'] };
+  }
+
+  const candidateBases = getEligibleBaseMenus(rerollSettings, settings.global, currentDisplayedBaseIds);
 
   if (!candidateBases.length) {
     showToast('ไม่มีเมนูอื่นที่ตรงกับเงื่อนไขที่เลือก');
@@ -612,7 +641,8 @@ function checkIfSettingsAreDefault() {
   const current = readFormSettings();
   const def = DEFAULT_SETTINGS;
 
-  const hasAllRegions = !current.global.regions || current.global.regions.length === 4;
+  const hasAllRegions = current.global.regions && current.global.regions.length === 4;
+  const hasAllCuisines = current.global.cuisines && current.global.cuisines.length === 4;
 
   const isDefault =
     current.morning.count === def.morning.count &&
@@ -622,10 +652,13 @@ function checkIfSettingsAreDefault() {
     current.morning.dish_types.includes('ต้ม/แกง') &&
     current.evening.count === def.evening.count &&
     current.evening.no_spicy === def.evening.no_spicy &&
-    current.evening.pair_soup === def.evening.pair_soup &&
+    Boolean(current.evening.pair_soup) === Boolean(def.evening.pair_soup) &&
+    current.evening.dish_types.includes('กับข้าว') &&
+    current.evening.dish_types.includes('ต้ม/แกง') &&
     current.global.no_repeat_30d === def.global.no_repeat_30d &&
     current.global.specific_cuts.length === 0 &&
-    hasAllRegions;
+    hasAllRegions &&
+    hasAllCuisines;
 
   const defChk = document.getElementById('chk-use-default');
   if (defChk) defChk.checked = isDefault;
@@ -841,6 +874,16 @@ function renderHistoryList(filterQuery = '') {
       showToast('ลบรายการออกจากประวัติแล้ว');
     });
   });
+}
+
+function openConfigModal() {
+  const modal = document.getElementById('config-modal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeConfigModal() {
+  const modal = document.getElementById('config-modal');
+  if (modal) modal.classList.remove('open');
 }
 
 function openHistoryModal() {
@@ -1175,6 +1218,65 @@ function boot() {
   // Hero Random Button
   document.getElementById('btn-random-hero').addEventListener('click', executeRandomRoll);
 
+  // ─── Config Modal Listeners ───
+  const btnConfigHeader = document.getElementById('btn-open-config-header');
+  if (btnConfigHeader) btnConfigHeader.addEventListener('click', openConfigModal);
+
+  const btnConfigHero = document.getElementById('btn-open-config-hero');
+  if (btnConfigHero) btnConfigHero.addEventListener('click', openConfigModal);
+
+  const btnCloseConfig = document.getElementById('btn-close-config');
+  if (btnCloseConfig) btnCloseConfig.addEventListener('click', closeConfigModal);
+
+  const btnConfigSaveClose = document.getElementById('btn-config-save-close');
+  if (btnConfigSaveClose) {
+    btnConfigSaveClose.addEventListener('click', () => {
+      closeConfigModal();
+      showToast('บันทึกการตั้งค่าเรียบร้อยแล้ว');
+    });
+  }
+
+  const btnConfigSaveRoll = document.getElementById('btn-config-save-roll');
+  if (btnConfigSaveRoll) {
+    btnConfigSaveRoll.addEventListener('click', () => {
+      closeConfigModal();
+      executeRandomRoll();
+    });
+  }
+
+  const btnResetModal = document.getElementById('btn-reset-modal');
+  if (btnResetModal) btnResetModal.addEventListener('click', resetToDefault);
+
+  const configModal = document.getElementById('config-modal');
+  if (configModal) {
+    configModal.addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeConfigModal();
+    });
+  }
+
+  // Soup checkboxes sync with dish type pills
+  const morningSoupCb = document.getElementById('morning-pair-soup');
+  if (morningSoupCb) {
+    morningSoupCb.addEventListener('change', () => {
+      const soupChip = document.querySelector('[name=morning-types][value="ต้ม/แกง"]');
+      if (soupChip && morningSoupCb.checked) {
+        soupChip.checked = true;
+      }
+      autoSaveSettings();
+    });
+  }
+
+  const eveningSoupCb = document.getElementById('evening-pair-soup');
+  if (eveningSoupCb) {
+    eveningSoupCb.addEventListener('change', () => {
+      const soupChip = document.querySelector('[name=evening-types][value="ต้ม/แกง"]');
+      if (soupChip && eveningSoupCb.checked) {
+        soupChip.checked = true;
+      }
+      autoSaveSettings();
+    });
+  }
+
   // ─── History Modal Listeners ───
   document.getElementById('btn-open-history').addEventListener('click', openHistoryModal);
   document.getElementById('btn-close-history').addEventListener('click', closeHistoryModal);
@@ -1265,6 +1367,7 @@ function boot() {
   // Global ESC key listener to close modals
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
+      closeConfigModal();
       closeHistoryModal();
       closeCatalogModal();
     }

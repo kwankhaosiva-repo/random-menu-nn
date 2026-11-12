@@ -29,6 +29,14 @@
     </div>
 
     <div class="header-actions">
+      <button class="nav-btn" id="btn-open-config-header" type="button" title="ปรับแต่งเงื่อนไขการสุ่ม">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span class="btn-text">ตั้งค่าเงื่อนไข</span>
+      </button>
+
       <button class="nav-btn" id="btn-open-catalog" type="button" title="ดูรายการเมนูทั้งหมดในระบบ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -77,9 +85,16 @@
           <span class="chk-box-mini"></span>
           <span class="chk-text-mini">
             <strong>ใช้ค่าเริ่มต้น (Default)</strong>
-            <span>— เช้า: 2 จาน (ไม่เผ็ด) | เย็น: 2 จาน (มีต้ม/แกง)</span>
+            <span>— เช้า: 2 จาน (ไม่เผ็ด + ต้มจืด) | เย็น: 2 จาน (มีต้ม/แกง)</span>
           </span>
         </label>
+        <button type="button" id="btn-open-config-hero" class="btn-config-pill" title="เปิดหน้าต่างปรับแต่งเงื่อนไขการสุ่ม">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>ปรับแต่งเงื่อนไข</span>
+        </button>
         <button type="button" id="btn-quick-reset" class="btn-reset-mini" title="คืนการตั้งค่าเป็นค่าเริ่มต้น">คืนค่าเริ่มต้น</button>
       </div>
     </div>
@@ -103,270 +118,314 @@
     </div>
   </section>
 
-  <!-- Section 2: Detailed Meal Configuration (เช้า & เย็น) -->
-  <section class="section-card config-wrapper">
-    <div class="section-header-compact">
-      <h2 class="section-title">ปรับแต่งจำนวนและประเภทอาหารแต่ละมื้อ</h2>
-      <p class="section-desc">กำหนดจำนวนจานและประเภทอาหารที่ต้องการสำหรับเช้าและเย็น</p>
-    </div>
-
-    <div class="meal-slots-grid">
-      
-      <!-- Morning Slot (ไม่มีต้ม/แกงสำหรับมื้อเช้าตามหลักบริโภคไทย) -->
-      <div class="slot-panel morning-panel">
-        <div class="slot-header">
-          <div class="slot-badge morning-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="4"></circle>
-              <path d="M12 2v2"></path>
-              <path d="M12 20v2"></path>
-              <path d="m4.93 4.93 1.41 1.41"></path>
-              <path d="m17.66 17.66 1.41 1.41"></path>
-              <path d="M2 12h2"></path>
-              <path d="M20 12h2"></path>
-              <path d="m6.34 17.66-1.41 1.41"></path>
-              <path d="m19.07 4.93-1.41 1.41"></path>
-            </svg>
-            <span>มื้อเช้า</span>
-          </div>
-          <span class="slot-subtext">รายการอาหารสำหรับช่วงเช้า</span>
-        </div>
-
-        <div class="form-group">
-          <label class="field-label">จำนวนเมนูมื้อเช้า</label>
-          <div class="segmented-control" role="group" aria-label="จำนวนเมนูมื้อเช้า">
-            <button type="button" class="segment-btn" name="morning-count" data-val="1">1 เมนู</button>
-            <button type="button" class="segment-btn active" name="morning-count" data-val="2">2 เมนู</button>
-            <button type="button" class="segment-btn" name="morning-count" data-val="3">3 เมนู</button>
-            <button type="button" class="segment-btn" name="morning-count" data-val="4">4 เมนู</button>
-          </div>
-        </div>
-
-        <!-- Morning Dish Types: กับข้าว, ต้ม / แกง (แกงจืด), จานเดียว -->
-        <div class="form-group">
-          <label class="field-label">ประเภทอาหารมื้อเช้า</label>
-          <div class="type-pills-row">
-            <label class="type-pill-toggle">
-              <input type="checkbox" name="morning-types" value="กับข้าว" checked />
-              <span class="pill-btn">กับข้าว</span>
-            </label>
-            <label class="type-pill-toggle">
-              <input type="checkbox" name="morning-types" value="ต้ม/แกง" checked />
-              <span class="pill-btn">ต้ม / แกง (แกงจืด)</span>
-            </label>
-            <label class="type-pill-toggle">
-              <input type="checkbox" name="morning-types" value="จานเดียว" />
-              <span class="pill-btn">อาหารจานเดียว</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="slot-options">
-          <label class="custom-checkbox">
-            <input type="checkbox" id="morning-no-spicy" checked />
-            <span class="checkbox-box"></span>
-            <span class="checkbox-content">
-              <span class="option-title">ไม่รับรสเผ็ดในมื้อเช้า</span>
-              <span class="option-hint">สุ่มเฉพาะเมนูที่ไม่เผ็ดและทานง่ายช่วงเช้า</span>
-            </span>
-          </label>
-
-          <label class="custom-checkbox">
-            <input type="checkbox" id="morning-pair-soup" />
-            <span class="checkbox-box"></span>
-            <span class="checkbox-content">
-              <span class="option-title">ต้องมีเมนูต้มจืดหรือแกง 1 รายการ</span>
-              <span class="option-hint">การันตีให้มื้อเช้ามีต้มจืดหรือซุปใสซดน้ำคล่องคอ</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Evening Slot -->
-      <div class="slot-panel evening-panel">
-        <div class="slot-header">
-          <div class="slot-badge evening-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-            </svg>
-            <span>มื้อเย็น</span>
-          </div>
-          <span class="slot-subtext">รายการอาหารสำหรับช่วงเย็น</span>
-        </div>
-
-        <div class="form-group">
-          <label class="field-label">จำนวนเมนูมื้อเย็น</label>
-          <div class="segmented-control" role="group" aria-label="จำนวนเมนูมื้อเย็น">
-            <button type="button" class="segment-btn" name="evening-count" data-val="1">1 เมนู</button>
-            <button type="button" class="segment-btn active" name="evening-count" data-val="2">2 เมนู</button>
-            <button type="button" class="segment-btn" name="evening-count" data-val="3">3 เมนู</button>
-            <button type="button" class="segment-btn" name="evening-count" data-val="4">4 เมนู</button>
-          </div>
-        </div>
-
-        <!-- Evening Dish Types -->
-        <div class="form-group">
-          <label class="field-label">ประเภทอาหารมื้อเย็น</label>
-          <div class="type-pills-row">
-            <label class="type-pill-toggle">
-              <input type="checkbox" name="evening-types" value="กับข้าว" checked />
-              <span class="pill-btn">กับข้าว</span>
-            </label>
-            <label class="type-pill-toggle">
-              <input type="checkbox" name="evening-types" value="ต้ม/แกง" checked />
-              <span class="pill-btn">ต้ม / แกง</span>
-            </label>
-            <label class="type-pill-toggle">
-              <input type="checkbox" name="evening-types" value="จานเดียว" checked />
-              <span class="pill-btn">อาหารจานเดียว</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="slot-options">
-          <label class="custom-checkbox">
-            <input type="checkbox" id="evening-no-spicy" />
-            <span class="checkbox-box"></span>
-            <span class="checkbox-content">
-              <span class="option-title">ไม่รับรสเผ็ดในมื้อเย็น</span>
-              <span class="option-hint">สุ่มเฉพาะเมนูที่ไม่เผ็ดสำหรับมื้อเย็น</span>
-            </span>
-          </label>
-
-          <label class="custom-checkbox">
-            <input type="checkbox" id="evening-pair-soup" />
-            <span class="checkbox-box"></span>
-            <span class="checkbox-content">
-              <span class="option-title">ต้องมีเมนูต้มหรือแกงคู่ 1 รายการ</span>
-              <span class="option-hint">การันตีให้มื้อเย็นมีต้มจืดหรือแกงสำหรับซดน้ำ</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Section 3: Detailed Meat Cuts & Cuisines Filter -->
-  <section class="section-card preferences-panel">
-    <div class="pref-header-row">
-      <div class="pref-title-group">
-        <h2 class="pref-title">ตัวกรองชิ้นส่วนเนื้อสัตว์และสัญชาติอาหาร</h2>
-        <p class="pref-subtitle">สามารถระบุชิ้นส่วนละเอียด เช่น หมูกรอบ, อกไก่, เนื้อสไลด์ หรือเลือกทุกวัตถุดิบ</p>
-      </div>
-      <button type="button" id="btn-reset-defaults" class="btn-text-action" title="คืนค่าเริ่มต้น">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-          <path d="M3 3v5h5"></path>
-        </svg>
-        <span>คืนค่าเริ่มต้น</span>
-      </button>
-    </div>
-
-    <!-- Granular Meat Cuts Filter -->
-    <div class="filter-block">
-      <div class="filter-label-row">
-        <div class="filter-label-title-wrap">
-          <span class="filter-name">ชิ้นส่วนวัตถุดิบและเนื้อสัตว์</span>
-          <span class="active-cuts-summary" id="cuts-summary-badge">ทุกวัตถุดิบ</span>
-        </div>
-        <div class="filter-actions-group">
-          <button type="button" class="btn-pill-action" id="btn-select-all-cuts">เลือกวัตถุดิบทั้งหมด</button>
-          <button type="button" class="btn-pill-action text-danger" id="btn-clear-cuts">ล้างตัวเลือก</button>
-        </div>
-      </div>
-
-      <!-- Category Filter Tabs -->
-      <div class="category-tabs-row" id="protein-cat-tabs">
-        <button type="button" class="cat-chip-btn active" data-cat="all">แสดงทุกหมวด</button>
-        <button type="button" class="cat-chip-btn" data-cat="หมู">เนื้อหมู</button>
-        <button type="button" class="cat-chip-btn" data-cat="ไก่">เนื้อไก่</button>
-        <button type="button" class="cat-chip-btn" data-cat="เนื้อ">เนื้อวัว</button>
-        <button type="button" class="cat-chip-btn" data-cat="ทะเล">อาหารทะเล</button>
-        <button type="button" class="cat-chip-btn" data-cat="เป็ด">เป็ด</button>
-        <button type="button" class="cat-chip-btn" data-cat="ไข่">ไข่</button>
-        <button type="button" class="cat-chip-btn" data-cat="ผัก">มังสวิรัติ / เต้าหู้</button>
-      </div>
-
-      <!-- Interactive Cuts Grid -->
-      <div class="cuts-selector-panel" id="cuts-chips-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </div>
-
-    <!-- Cuisine Filter with Nested Thai Regions -->
-    <div class="filter-block">
-      <div class="filter-label-row">
-        <span class="filter-name">ประเทศและสัญชาติอาหาร</span>
-        <button type="button" class="quick-select-all" data-target="cuisine">เลือกทั้งหมด</button>
-      </div>
-      <div class="chips-grid">
-        <label class="chip-item">
-          <input type="checkbox" name="cuisine" value="ไทย" checked id="chk-cuisine-thai" />
-          <span class="chip-label"><span class="code-tag">TH</span> อาหารไทย</span>
-        </label>
-        <label class="chip-item">
-          <input type="checkbox" name="cuisine" value="จีน" checked />
-          <span class="chip-label"><span class="code-tag">CN</span> อาหารจีน</span>
-        </label>
-        <label class="chip-item">
-          <input type="checkbox" name="cuisine" value="ญี่ปุ่น" checked />
-          <span class="chip-label"><span class="code-tag">JP</span> อาหารญี่ปุ่น</span>
-        </label>
-        <label class="chip-item">
-          <input type="checkbox" name="cuisine" value="ฝรั่ง" checked />
-          <span class="chip-label"><span class="code-tag">INTL</span> อาหารตะวันตก</span>
-        </label>
-      </div>
-
-      <!-- Thai Regional Sub-filter (เป็น Subset ของอาหารไทยโดยตรง) -->
-      <div class="sub-filter-block" id="thai-region-filter-block">
-        <div class="sub-filter-header">
-          <div class="sub-filter-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-            <span>ภูมิภาคย่อยของอาหารไทย (สุ่มเฉพาะภาคที่เลือก)</span>
-          </div>
-          <button type="button" class="quick-select-all" data-target="thai-region" id="btn-select-all-thai-regions">เลือกทุกภาค</button>
-        </div>
-        <div class="chips-grid">
-          <label class="chip-item">
-            <input type="checkbox" name="thai-region" value="กลาง" checked />
-            <span class="chip-label"><span class="code-tag region-tag-c">กลาง</span> ภาคกลาง</span>
-          </label>
-          <label class="chip-item">
-            <input type="checkbox" name="thai-region" value="อีสาน" checked />
-            <span class="chip-label"><span class="code-tag region-tag-e">อีสาน</span> ภาคอีสาน</span>
-          </label>
-          <label class="chip-item">
-            <input type="checkbox" name="thai-region" value="เหนือ" checked />
-            <span class="chip-label"><span class="code-tag region-tag-n">เหนือ</span> ภาคเหนือ</span>
-          </label>
-          <label class="chip-item">
-            <input type="checkbox" name="thai-region" value="ใต้" checked />
-            <span class="chip-label"><span class="code-tag region-tag-s">ใต้</span> ภาคใต้</span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- 30-day History Avoidance -->
-    <div class="rule-switch-card">
-      <label class="toggle-switch-label">
-        <div class="switch-text-group">
-          <span class="switch-title">ป้องกันเมนูซ้ำซ้อนภายใน 30 วัน</span>
-          <span class="switch-hint">ระบบจะตรวจเทียบประวัติย้อนหลัง และตัดเมนูที่เพิ่งกินไปออกอัตโนมัติ (ล้างข้อมูลอัตโนมัติเมื่อครบ 30 วัน)</span>
-        </div>
-        <div class="switch-control">
-          <input type="checkbox" id="global-no-repeat" checked />
-          <span class="switch-slider"></span>
-        </div>
-      </label>
-    </div>
-  </section>
-
 </main>
+
+<!-- ─── Modal 0: Configuration Modal (หน้าต่างตั้งค่าเงื่อนไขการสุ่ม) ─── -->
+<div id="config-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="config-title">
+  <div class="modal-card config-modal-card">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-icon-badge config-icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 id="config-title" class="modal-title">ตั้งค่าเงื่อนไขการสุ่มอาหาร</h2>
+          <p class="modal-subtitle">กำหนดจำนวนจาน, ประเภท, รสชาติ, สัญชาติ และวัตถุดิบเนื้อสัตว์ที่ต้องการ</p>
+        </div>
+      </div>
+      <button class="modal-close-btn" id="btn-close-config" aria-label="ปิดหน้าต่าง">✕</button>
+    </div>
+
+    <!-- Modal Scrollable Body -->
+    <div class="modal-scrollable-body config-modal-body">
+
+      <!-- Section 1: Detailed Meal Configuration (เช้า & เย็น) -->
+      <section class="section-card config-wrapper">
+        <div class="section-header-compact">
+          <h2 class="section-title">ปรับแต่งจำนวนและประเภทอาหารแต่ละมื้อ</h2>
+          <p class="section-desc">กำหนดจำนวนจานและประเภทอาหารที่ต้องการสำหรับเช้าและเย็น</p>
+        </div>
+
+        <div class="meal-slots-grid">
+          
+          <!-- Morning Slot -->
+          <div class="slot-panel morning-panel">
+            <div class="slot-header">
+              <div class="slot-badge morning-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path d="M12 2v2"></path>
+                  <path d="M12 20v2"></path>
+                  <path d="m4.93 4.93 1.41 1.41"></path>
+                  <path d="m17.66 17.66 1.41 1.41"></path>
+                  <path d="M2 12h2"></path>
+                  <path d="M20 12h2"></path>
+                  <path d="m6.34 17.66-1.41 1.41"></path>
+                  <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+                <span>มื้อเช้า</span>
+              </div>
+              <span class="slot-subtext">รายการอาหารสำหรับช่วงเช้า</span>
+            </div>
+
+            <div class="form-group">
+              <label class="field-label">จำนวนเมนูมื้อเช้า</label>
+              <div class="segmented-control" role="group" aria-label="จำนวนเมนูมื้อเช้า">
+                <button type="button" class="segment-btn" name="morning-count" data-val="1">1 เมนู</button>
+                <button type="button" class="segment-btn active" name="morning-count" data-val="2">2 เมนู</button>
+                <button type="button" class="segment-btn" name="morning-count" data-val="3">3 เมนู</button>
+                <button type="button" class="segment-btn" name="morning-count" data-val="4">4 เมนู</button>
+              </div>
+            </div>
+
+            <!-- Morning Dish Types: กับข้าว, ต้ม / แกง (แกงจืด), จานเดียว -->
+            <div class="form-group">
+              <label class="field-label">ประเภทอาหารมื้อเช้า</label>
+              <div class="type-pills-row">
+                <label class="type-pill-toggle">
+                  <input type="checkbox" name="morning-types" value="กับข้าว" checked />
+                  <span class="pill-btn">กับข้าว</span>
+                </label>
+                <label class="type-pill-toggle">
+                  <input type="checkbox" name="morning-types" value="ต้ม/แกง" checked />
+                  <span class="pill-btn">ต้ม / แกง (แกงจืด)</span>
+                </label>
+                <label class="type-pill-toggle">
+                  <input type="checkbox" name="morning-types" value="จานเดียว" />
+                  <span class="pill-btn">อาหารจานเดียว</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="slot-options">
+              <label class="custom-checkbox">
+                <input type="checkbox" id="morning-no-spicy" checked />
+                <span class="checkbox-box"></span>
+                <span class="checkbox-content">
+                  <span class="option-title">ไม่รับรสเผ็ดในมื้อเช้า</span>
+                  <span class="option-hint">สุ่มเฉพาะเมนูที่ไม่เผ็ดและทานง่ายช่วงเช้า</span>
+                </span>
+              </label>
+
+              <label class="custom-checkbox">
+                <input type="checkbox" id="morning-pair-soup" checked />
+                <span class="checkbox-box"></span>
+                <span class="checkbox-content">
+                  <span class="option-title">ต้องมีเมนูต้มจืดหรือแกง 1 รายการ</span>
+                  <span class="option-hint">การันตีให้มื้อเช้ามีต้มจืดหรือซุปใสซดน้ำคล่องคอ</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Evening Slot -->
+          <div class="slot-panel evening-panel">
+            <div class="slot-header">
+              <div class="slot-badge evening-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+                <span>มื้อเย็น</span>
+              </div>
+              <span class="slot-subtext">รายการอาหารสำหรับช่วงเย็น</span>
+            </div>
+
+            <div class="form-group">
+              <label class="field-label">จำนวนเมนูมื้อเย็น</label>
+              <div class="segmented-control" role="group" aria-label="จำนวนเมนูมื้อเย็น">
+                <button type="button" class="segment-btn" name="evening-count" data-val="1">1 เมนู</button>
+                <button type="button" class="segment-btn active" name="evening-count" data-val="2">2 เมนู</button>
+                <button type="button" class="segment-btn" name="evening-count" data-val="3">3 เมนู</button>
+                <button type="button" class="segment-btn" name="evening-count" data-val="4">4 เมนู</button>
+              </div>
+            </div>
+
+            <!-- Evening Dish Types -->
+            <div class="form-group">
+              <label class="field-label">ประเภทอาหารมื้อเย็น</label>
+              <div class="type-pills-row">
+                <label class="type-pill-toggle">
+                  <input type="checkbox" name="evening-types" value="กับข้าว" checked />
+                  <span class="pill-btn">กับข้าว</span>
+                </label>
+                <label class="type-pill-toggle">
+                  <input type="checkbox" name="evening-types" value="ต้ม/แกง" checked />
+                  <span class="pill-btn">ต้ม / แกง</span>
+                </label>
+                <label class="type-pill-toggle">
+                  <input type="checkbox" name="evening-types" value="จานเดียว" checked />
+                  <span class="pill-btn">อาหารจานเดียว</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="slot-options">
+              <label class="custom-checkbox">
+                <input type="checkbox" id="evening-no-spicy" />
+                <span class="checkbox-box"></span>
+                <span class="checkbox-content">
+                  <span class="option-title">ไม่รับรสเผ็ดในมื้อเย็น</span>
+                  <span class="option-hint">สุ่มเฉพาะเมนูที่ไม่เผ็ดสำหรับมื้อเย็น</span>
+                </span>
+              </label>
+
+              <label class="custom-checkbox">
+                <input type="checkbox" id="evening-pair-soup" checked />
+                <span class="checkbox-box"></span>
+                <span class="checkbox-content">
+                  <span class="option-title">ต้องมีเมนูต้มหรือแกงคู่ 1 รายการ</span>
+                  <span class="option-hint">การันตีให้มื้อเย็นมีต้มจืดหรือแกงสำหรับซดน้ำ</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 2: Detailed Meat Cuts & Cuisines Filter -->
+      <section class="section-card preferences-panel">
+        <div class="pref-header-row">
+          <div class="pref-title-group">
+            <h2 class="pref-title">ตัวกรองชิ้นส่วนเนื้อสัตว์และสัญชาติอาหาร</h2>
+            <p class="pref-subtitle">สามารถระบุชิ้นส่วนละเอียด เช่น หมูกรอบ, อกไก่, เนื้อสไลด์ หรือเลือกทุกวัตถุดิบ</p>
+          </div>
+          <button type="button" id="btn-reset-defaults" class="btn-text-action" title="คืนค่าเริ่มต้น">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>คืนค่าเริ่มต้น</span>
+          </button>
+        </div>
+
+        <!-- Granular Meat Cuts Filter -->
+        <div class="filter-block">
+          <div class="filter-label-row">
+            <div class="filter-label-title-wrap">
+              <span class="filter-name">ชิ้นส่วนวัตถุดิบและเนื้อสัตว์</span>
+              <span class="active-cuts-summary" id="cuts-summary-badge">ทุกวัตถุดิบ</span>
+            </div>
+            <div class="filter-actions-group">
+              <button type="button" class="btn-pill-action" id="btn-select-all-cuts">เลือกวัตถุดิบทั้งหมด</button>
+              <button type="button" class="btn-pill-action text-danger" id="btn-clear-cuts">ล้างตัวเลือก</button>
+            </div>
+          </div>
+
+          <!-- Category Filter Tabs -->
+          <div class="category-tabs-row" id="protein-cat-tabs">
+            <button type="button" class="cat-chip-btn active" data-cat="all">แสดงทุกหมวด</button>
+            <button type="button" class="cat-chip-btn" data-cat="หมู">เนื้อหมู</button>
+            <button type="button" class="cat-chip-btn" data-cat="ไก่">เนื้อไก่</button>
+            <button type="button" class="cat-chip-btn" data-cat="เนื้อ">เนื้อวัว</button>
+            <button type="button" class="cat-chip-btn" data-cat="ทะเล">อาหารทะเล</button>
+            <button type="button" class="cat-chip-btn" data-cat="เป็ด">เป็ด</button>
+            <button type="button" class="cat-chip-btn" data-cat="ไข่">ไข่</button>
+            <button type="button" class="cat-chip-btn" data-cat="ผัก">มังสวิรัติ / เต้าหู้</button>
+          </div>
+
+          <!-- Interactive Cuts Grid -->
+          <div class="cuts-selector-panel" id="cuts-chips-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Cuisine Filter with Nested Thai Regions -->
+        <div class="filter-block">
+          <div class="filter-label-row">
+            <span class="filter-name">ประเทศและสัญชาติอาหาร</span>
+            <button type="button" class="quick-select-all" data-target="cuisine">เลือกทั้งหมด</button>
+          </div>
+          <div class="chips-grid">
+            <label class="chip-item">
+              <input type="checkbox" name="cuisine" value="ไทย" checked id="chk-cuisine-thai" />
+              <span class="chip-label"><span class="code-tag">TH</span> อาหารไทย</span>
+            </label>
+            <label class="chip-item">
+              <input type="checkbox" name="cuisine" value="จีน" checked />
+              <span class="chip-label"><span class="code-tag">CN</span> อาหารจีน</span>
+            </label>
+            <label class="chip-item">
+              <input type="checkbox" name="cuisine" value="ญี่ปุ่น" checked />
+              <span class="chip-label"><span class="code-tag">JP</span> อาหารญี่ปุ่น</span>
+            </label>
+            <label class="chip-item">
+              <input type="checkbox" name="cuisine" value="ฝรั่ง" checked />
+              <span class="chip-label"><span class="code-tag">INTL</span> อาหารตะวันตก</span>
+            </label>
+          </div>
+
+          <!-- Thai Regional Sub-filter (เป็น Subset ของอาหารไทยโดยตรง) -->
+          <div class="sub-filter-block" id="thai-region-filter-block">
+            <div class="sub-filter-header">
+              <div class="sub-filter-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+                <span>ภูมิภาคย่อยของอาหารไทย (สุ่มเฉพาะภาคที่เลือก)</span>
+              </div>
+              <button type="button" class="quick-select-all" data-target="thai-region" id="btn-select-all-thai-regions">เลือกทุกภาค</button>
+            </div>
+            <div class="chips-grid">
+              <label class="chip-item">
+                <input type="checkbox" name="thai-region" value="กลาง" checked />
+                <span class="chip-label"><span class="code-tag region-tag-c">กลาง</span> ภาคกลาง</span>
+              </label>
+              <label class="chip-item">
+                <input type="checkbox" name="thai-region" value="อีสาน" checked />
+                <span class="chip-label"><span class="code-tag region-tag-e">อีสาน</span> ภาคอีสาน</span>
+              </label>
+              <label class="chip-item">
+                <input type="checkbox" name="thai-region" value="เหนือ" checked />
+                <span class="chip-label"><span class="code-tag region-tag-n">เหนือ</span> ภาคเหนือ</span>
+              </label>
+              <label class="chip-item">
+                <input type="checkbox" name="thai-region" value="ใต้" checked />
+                <span class="chip-label"><span class="code-tag region-tag-s">ใต้</span> ภาคใต้</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 30-day History Avoidance -->
+        <div class="rule-switch-card">
+          <label class="toggle-switch-label">
+            <div class="switch-text-group">
+              <span class="switch-title">ป้องกันเมนูซ้ำซ้อนภายใน 30 วัน</span>
+              <span class="switch-hint">ระบบจะตรวจเทียบประวัติย้อนหลัง และตัดเมนูที่เพิ่งกินไปออกอัตโนมัติ (ล้างข้อมูลอัตโนมัติเมื่อครบ 30 วัน)</span>
+            </div>
+            <div class="switch-control">
+              <input type="checkbox" id="global-no-repeat" checked />
+              <span class="switch-slider"></span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button type="button" id="btn-reset-modal" class="btn-secondary" title="คืนค่าเริ่มต้น">คืนค่าเริ่มต้น</button>
+      <div class="modal-footer-actions">
+        <button type="button" id="btn-config-save-close" class="btn-secondary">ปิดหน้าต่าง</button>
+        <button type="button" id="btn-config-save-roll" class="btn-primary-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 3h5v5"></path>
+            <path d="M4 20L21 3"></path>
+            <path d="M21 16v5h-5"></path>
+            <path d="M15 15l6 6"></path>
+            <path d="M4 4l5 5"></path>
+          </svg>
+          <span>บันทึกและสุ่มทันที</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ─── Modal 1: History Modal ──────────────────────────────── -->
 <div id="history-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="hist-title">
