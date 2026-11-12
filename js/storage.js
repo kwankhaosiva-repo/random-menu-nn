@@ -132,3 +132,21 @@ export function getCombinedMenus(baseMenus) {
   const customFiltered = custom.filter(cm => !baseMenus.some(bm => bm.id === cm.id));
   return [...customFiltered, ...baseMenus];
 }
+
+export function getCombinedBaseMenus(builtinBases) {
+  const custom = loadCustomMenus();
+  const customBases = custom.map(cm => ({
+    id: cm.id,
+    base_name: cm.base_name || cm.name,
+    name_template: cm.name_template || cm.name,
+    cuisine: cm.cuisine,
+    region: cm.region || null,
+    dish_type: cm.dish_type,
+    spicy: Boolean(cm.spicy),
+    is_pair: Boolean(cm.is_pair),
+    allowed_proteins: cm.allowed_proteins || cm.proteins || ['ผัก'],
+    is_custom: true,
+  }));
+  const customFiltered = customBases.filter(cb => !builtinBases.some(bb => bb.id === cb.id));
+  return [...customFiltered, ...builtinBases];
+}

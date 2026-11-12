@@ -1293,7 +1293,102 @@ body {
   border: 1px solid #d8b4fe;
 }
 
-/* Individual Reroll Button */
+/* Dish Action Buttons (Dual Reroll: Change Protein vs Full Dish) */
+.dish-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-action-reroll {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Button 1: Change Protein Only */
+.btn-reroll-protein {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+}
+
+.btn-reroll-protein:hover:not(:disabled) {
+  background: var(--surface-alt);
+  border-color: #cbd5e1;
+  color: #c2410c;
+}
+
+.btn-reroll-protein svg {
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+  transition: transform 0.25s ease;
+}
+
+.btn-reroll-protein:hover:not(:disabled) svg {
+  transform: rotate(90deg);
+}
+
+.btn-reroll-protein:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--surface-muted);
+  border-color: var(--border);
+  color: var(--text-subtle);
+}
+
+.btn-reroll-protein:disabled svg {
+  color: var(--text-subtle);
+}
+
+/* Button 2: Full Dish Reroll */
+.btn-reroll-dish {
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+}
+
+.btn-reroll-dish:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.btn-reroll-dish svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.25s ease;
+}
+
+.btn-reroll-dish:hover svg {
+  transform: rotate(180deg);
+}
+
+/* In-place Meat Swap Animation */
+@keyframes protein-pulse {
+  0% { transform: scale(1); background-color: var(--surface); }
+  50% { transform: scale(1.015); background-color: #fff7ed; border-color: var(--primary-border); }
+  100% { transform: scale(1); background-color: var(--surface); }
+}
+
+.protein-swapped {
+  animation: protein-pulse 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Individual Reroll Button (Legacy fallback) */
 .btn-reroll-item {
   display: inline-flex;
   align-items: center;
@@ -1968,6 +2063,19 @@ body {
     gap: 12px;
   }
   
+  .dish-actions-wrap {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn-action-reroll {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
   .btn-reroll-item {
     width: 100%;
   }

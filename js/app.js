@@ -1,9 +1,9 @@
 // app.js — Core Random Logic & UI Controller (Professional UI/UX Version)
-import { MENUS, PROTEIN_CATEGORIES, THAI_REGIONS } from '../data/menus.js';
+import { MENUS, BASE_MENUS, PROTEIN_CATEGORIES, THAI_REGIONS, resolveDish } from '../data/menus.js';
 import {
   loadSettings, saveSettings,
   loadHistory, addHistory, removeHistoryItem, removeHistoryById, clearHistory, isInHistory,
-  loadCustomMenus, addCustomMenu, deleteCustomMenu, getCombinedMenus,
+  loadCustomMenus, addCustomMenu, deleteCustomMenu, getCombinedMenus, getCombinedBaseMenus,
   DEFAULT_SETTINGS,
 } from './storage.js';
 
@@ -57,73 +57,95 @@ function loadSavedRollState() {
   }
 }
 
-// ─── Filter Logic ───────────────────────────────────────────────────────────
+// ─── Filter & Add-on Logic ──────────────────────────────────────────────────
 
-function getEligibleMenus(slotSettings, globalSettings, excludeIds = []) {
-  const allAvailable = getCombinedMenus(MENUS);
+function getEligibleBaseMenus(slotSettings, globalSettings, excludeBaseIds = []) {
+  const allBases = getCombinedBaseMenus(BASE_MENUS);
   const { no_spicy, dish_types } = slotSettings;
   const { no_repeat_30d, specific_cuts, cuisines, regions } = globalSettings;
 
-  return allAvailable.filter(m => {
-    // Exclude menus already shown or specifically excluded
-    if (excludeIds.includes(m.id)) return false;
+  return allBases.filter(b => {
+    // Exclude base if already in use in this round
+    if (excludeBaseIds.includes(b.id)) return false;
 
     // Filter dish_type for this meal slot
-    if (dish_types && dish_types.length && !dish_types.includes(m.dish_type)) {
+    if (dish_types && dish_types.length && !dish_types.includes(b.dish_type)) {
       return false;
     }
 
     // Filter spicy
-    if (no_spicy && m.spicy) return false;
+    if (no_spicy && b.spicy) return false;
 
-    // Filter cuisine ([] = all)
-    if (cuisines && cuisines.length && !cuisines.includes(m.cuisine)) return false;
+    // Filter cuisine
+    if (cuisines && cuisines.length && !cuisines.includes(b.cuisine)) return false;
 
     // Filter region for Thai cuisine
-    if (m.cuisine === 'ไทย' && regions && regions.length > 0 && m.region) {
-      if (!regions.includes(m.region)) return false;
+    if (b.cuisine === 'ไทย' && regions && regions.length > 0 && b.region) {
+      if (!regions.includes(b.region)) return false;
     }
 
-    // Filter granular protein cuts (if user selected specific cuts)
+    // Filter specific meat cuts:
+    // Base dish must have at least one allowed protein matching user's filter
+    const allowed = b.allowed_proteins && b.allowed_proteins.length ? b.allowed_proteins : ['ผัก'];
     if (specific_cuts && specific_cuts.length > 0) {
-      const matchCut = specific_cuts.some(cut => {
-        if (cut === 'ผัก') {
-          return (!m.protein_groups || m.protein_groups.length === 0) || (m.proteins && m.proteins.includes('ผัก'));
-        }
-        return (m.proteins && m.proteins.includes(cut)) || m.name.includes(cut);
-      });
-      if (!matchCut) return false;
+      const match = allowed.some(cut => specific_cuts.includes(cut));
+      if (!match) return false;
     }
 
     // Filter 30-day repetition
-    if (no_repeat_30d && isInHistory(m.id)) return false;
+    if (no_repeat_30d && (isInHistory(b.id) || isInHistory(`${b.id}_base`))) {
+      return false;
+    }
 
     return true;
   });
 }
 
-function pickMultiple(slotSettings, globalSettings, excludeIds = [], ensurePairSoup = false) {
-  let pool = getEligibleMenus(slotSettings, globalSettings, excludeIds);
+function pickProteinForBase(baseDish, specific_cuts = [], excludeProtein = null) {
+  let candidates = [...(baseDish.allowed_proteins || ['ผัก'])];
+
+  // If specific cuts filter is active, only pick matching cuts
+  if (specific_cuts && specific_cuts.length > 0) {
+    const matching = candidates.filter(p => specific_cuts.includes(p));
+    if (matching.length > 0) candidates = matching;
+  }
+
+  // If excludeProtein provided, try to avoid picking the exact same protein
+  if (excludeProtein && candidates.length > 1) {
+    const diff = candidates.filter(p => p !== excludeProtein);
+    if (diff.length > 0) candidates = diff;
+  }
+
+  if (!candidates.length) return 'ผัก';
+  return shuffle(candidates)[0];
+}
+
+function pickMultiple(slotSettings, globalSettings, excludeBaseIds = [], ensurePairSoup = false) {
+  let pool = getEligibleBaseMenus(slotSettings, globalSettings, excludeBaseIds);
   const count = slotSettings.count;
   if (!pool.length || count <= 0) return [];
 
   pool = shuffle(pool);
-  const picked = [];
+  const pickedBases = [];
 
   // Guarantee soup/curry dish if requested and available
   if (ensurePairSoup) {
-    const soupIndex = pool.findIndex(m => m.dish_type === 'ต้ม/แกง' || m.is_pair);
+    const soupIndex = pool.findIndex(b => b.dish_type === 'ต้ม/แกง' || b.is_pair);
     if (soupIndex !== -1) {
-      picked.push(pool.splice(soupIndex, 1)[0]);
+      pickedBases.push(pool.splice(soupIndex, 1)[0]);
     }
   }
 
-  // Fill the remaining needed dishes
-  while (picked.length < count && pool.length > 0) {
-    picked.push(pool.pop());
+  // Fill remaining needed dishes
+  while (pickedBases.length < count && pool.length > 0) {
+    pickedBases.push(pool.pop());
   }
 
-  return picked;
+  // Resolve each base dish with a selected protein
+  return pickedBases.map(b => {
+    const protein = pickProteinForBase(b, globalSettings.specific_cuts || []);
+    return resolveDish(b, protein);
+  });
 }
 
 // ─── UI Rendering (Clean Professional Style) ────────────────────────────────
@@ -164,12 +186,14 @@ function renderDishCard(menu, mealType) {
     ? `<span class="badge badge-region ${REGION_CLASSES[menu.region] || ''}">ภาค${menu.region}</span>`
     : '';
 
-  const cutBadges = (menu.proteins && menu.proteins.length ? menu.proteins : menu.protein_groups || [])
-    .map(p => `<span class="badge badge-cut">${p}</span>`)
-    .join('');
+  const currentCut = menu.selectedProtein || (menu.proteins && menu.proteins[0]) || 'ผัก';
+  const cutBadge = `<span class="badge badge-cut">${currentCut}</span>`;
+
+  const canSwapProtein = menu.allowed_proteins && menu.allowed_proteins.length > 1;
 
   return `
-    <div class="result-dish-card ${isMorning ? 'morning-card' : 'evening-card'}" data-id="${menu.id}" data-meal="${mealType}">
+    <div class="result-dish-card ${isMorning ? 'morning-card' : 'evening-card'}" 
+         data-id="${menu.id}" data-base-id="${menu.baseId}" data-meal="${mealType}">
       <div class="dish-info">
         <div class="dish-name-row">
           <span class="dish-name">${menu.name}</span>
@@ -180,20 +204,42 @@ function renderDishCard(menu, mealType) {
           ${regionBadge}
           <span class="badge ${typeClass}">${menu.dish_type}</span>
           ${spicyBadge}
-          ${cutBadges}
+          ${cutBadge}
         </div>
       </div>
-      <button type="button" class="btn-reroll-item" data-id="${menu.id}" data-meal="${mealType}" title="สุ่มเปลี่ยนเฉพาะเมนูนี้">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-          <path d="M3 3v5h5"></path>
-          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
-          <path d="M16 21h5v-5"></path>
-        </svg>
-        <span>สุ่มใหม่</span>
-      </button>
+      <div class="dish-actions-wrap">
+        <button type="button" class="btn-action-reroll btn-reroll-protein" 
+                data-id="${menu.id}" data-base-id="${menu.baseId}" data-meal="${mealType}"
+                ${canSwapProtein ? '' : 'disabled'}
+                title="${canSwapProtein ? 'สุ่มเปลี่ยนเฉพาะวัตถุดิบ/เนื้อสัตว์' : 'เมนูนี้มีวัตถุดิบเฉพาะ'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+          <span>เปลี่ยนเนื้อสัตว์</span>
+        </button>
+        <button type="button" class="btn-action-reroll btn-reroll-dish" 
+                data-id="${menu.id}" data-base-id="${menu.baseId}" data-meal="${mealType}"
+                title="สุ่มเปลี่ยนทั้งเมนู">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+            <path d="M16 21h5v-5"></path>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          <span>สุ่มเมนูใหม่</span>
+        </button>
+      </div>
     </div>
   `;
+}
+
+function bindDishCardActions(rootEl) {
+  rootEl.querySelectorAll('.btn-reroll-dish').forEach(btn => {
+    btn.addEventListener('click', handleRerollDish);
+  });
+  rootEl.querySelectorAll('.btn-reroll-protein').forEach(btn => {
+    btn.addEventListener('click', handleRerollProtein);
+  });
 }
 
 function renderResults(morningMenus, eveningMenus) {
@@ -253,74 +299,136 @@ function renderResults(morningMenus, eveningMenus) {
   }
 
   container.innerHTML = html;
-
-  // Bind individual reroll buttons
-  container.querySelectorAll('.btn-reroll-item').forEach(btn => {
-    btn.addEventListener('click', handleIndividualReroll);
-  });
+  bindDishCardActions(container);
 }
 
-// ─── Individual Reroll Handler (IN-PLACE DOM REPLACEMENT ONLY) ──────────────
+// ─── Dual Reroll Handlers (In-Place DOM Replacement) ───────────────────────
 
-function handleIndividualReroll(event) {
+function handleRerollDish(event) {
   const btn = event.currentTarget;
   const oldId = btn.dataset.id;
+  const oldBaseId = btn.dataset.baseId;
   const meal = btn.dataset.meal;
   const cardEl = btn.closest('.result-dish-card');
   if (!cardEl) return;
 
   const settings = readFormSettings();
 
-  // 1. Remove the old menu from 30-day history so it won't be penalized
+  // 1. Remove old dish from history
   removeHistoryById(oldId);
+  removeHistoryById(oldBaseId);
 
-  // 2. Identify currently displayed IDs so the replacement doesn't duplicate them
-  const currentDisplayedIds = [
-    ...currentMorning.map(m => m.id),
-    ...currentEvening.map(m => m.id),
+  // 2. Identify currently displayed base IDs
+  const currentDisplayedBaseIds = [
+    ...currentMorning.map(m => m.baseId),
+    ...currentEvening.map(m => m.baseId),
   ];
 
-  // 3. Pick single replacement
+  // 3. Pick replacement base dish
   const slotSettings = meal === 'morning' ? settings.morning : settings.evening;
-  const candidatePool = getEligibleMenus(slotSettings, settings.global, currentDisplayedIds);
+  const candidateBases = getEligibleBaseMenus(slotSettings, settings.global, currentDisplayedBaseIds);
 
-  if (!candidatePool.length) {
+  if (!candidateBases.length) {
     showToast('ไม่มีเมนูอื่นที่ตรงกับเงื่อนไขที่เลือก');
     return;
   }
 
-  const replacement = shuffle(candidatePool)[0];
+  const newBase = shuffle(candidateBases)[0];
+  const newProtein = pickProteinForBase(newBase, settings.global.specific_cuts || []);
+  const replacement = resolveDish(newBase, newProtein);
 
   // 4. Update in-memory state
   if (meal === 'morning') {
-    const idx = currentMorning.findIndex(m => m.id === oldId);
+    const idx = currentMorning.findIndex(m => m.id === oldId || m.baseId === oldBaseId);
     if (idx !== -1) currentMorning[idx] = replacement;
   } else {
-    const idx = currentEvening.findIndex(m => m.id === oldId);
+    const idx = currentEvening.findIndex(m => m.id === oldId || m.baseId === oldBaseId);
     if (idx !== -1) currentEvening[idx] = replacement;
   }
 
   // 5. Add new menu to history
-  addHistory([{ id: replacement.id, name: replacement.name, meal }]);
+  addHistory([{ id: replacement.id, baseId: replacement.baseId, name: replacement.name, meal }]);
 
-  // 6. IN-PLACE DOM REPLACEMENT: Replace ONLY this single card element
-  // The rest of the page remains 100% untouched and static!
+  // 6. In-place DOM Replacement
   const temp = document.createElement('div');
   temp.innerHTML = renderDishCard(replacement, meal);
   const newCardEl = temp.firstElementChild;
 
-  // Add subtle exit animation on the old card
   cardEl.classList.add('replacing-card');
 
   setTimeout(() => {
     cardEl.replaceWith(newCardEl);
-    // Bind reroll listener on the new replacement card
-    newCardEl.querySelector('.btn-reroll-item').addEventListener('click', handleIndividualReroll);
-    // Persist current displayed state in localStorage
+    bindDishCardActions(newCardEl);
     saveCurrentRollState();
     updateHeaderCounts();
-    showToast(`เปลี่ยนเป็น: ${replacement.name}`);
+    showToast(`เปลี่ยนเมนูเป็น: ${replacement.name}`);
   }, 120);
+}
+
+function handleRerollProtein(event) {
+  const btn = event.currentTarget;
+  if (btn.disabled) return;
+
+  const dishId = btn.dataset.id;
+  const baseId = btn.dataset.baseId;
+  const meal = btn.dataset.meal;
+  const cardEl = btn.closest('.result-dish-card');
+  if (!cardEl) return;
+
+  const currentList = meal === 'morning' ? currentMorning : currentEvening;
+  const currentIdx = currentList.findIndex(m => m.id === dishId || m.baseId === baseId);
+  if (currentIdx === -1) return;
+
+  const currentMenu = currentList[currentIdx];
+  const allBases = getCombinedBaseMenus(BASE_MENUS);
+  const baseDish = allBases.find(b => b.id === currentMenu.baseId);
+
+  if (!baseDish || !baseDish.allowed_proteins || baseDish.allowed_proteins.length <= 1) {
+    showToast('เมนูนี้มีวัตถุดิบเฉพาะ ไม่สามารถเปลี่ยนเนื้อสัตว์ได้');
+    return;
+  }
+
+  const settings = readFormSettings();
+  const currentProtein = currentMenu.selectedProtein;
+
+  // Filter candidates matching user's specific cuts filter (if active)
+  let candidateProteins = baseDish.allowed_proteins.filter(p => p !== currentProtein);
+  if (settings.global.specific_cuts && settings.global.specific_cuts.length > 0) {
+    const matching = candidateProteins.filter(p => settings.global.specific_cuts.includes(p));
+    if (matching.length > 0) candidateProteins = matching;
+  }
+
+  if (!candidateProteins.length) {
+    showToast('ไม่มีวัตถุดิบอื่นที่ตรงกับเงื่อนไขที่เลือก');
+    return;
+  }
+
+  const newProtein = shuffle(candidateProteins)[0];
+  const updatedMenu = resolveDish(baseDish, newProtein);
+
+  // Update in-memory state
+  if (meal === 'morning') {
+    currentMorning[currentIdx] = updatedMenu;
+  } else {
+    currentEvening[currentIdx] = updatedMenu;
+  }
+
+  // Update history
+  removeHistoryById(currentMenu.id);
+  addHistory([{ id: updatedMenu.id, baseId: updatedMenu.baseId, name: updatedMenu.name, meal }]);
+
+  // In-place replacement with highlight animation
+  const temp = document.createElement('div');
+  temp.innerHTML = renderDishCard(updatedMenu, meal);
+  const newCardEl = temp.firstElementChild;
+  newCardEl.classList.add('protein-swapped');
+
+  cardEl.replaceWith(newCardEl);
+  bindDishCardActions(newCardEl);
+
+  saveCurrentRollState();
+  updateHeaderCounts();
+  showToast(`เปลี่ยนเนื้อสัตว์เป็น: ${newProtein} (${updatedMenu.name})`);
 }
 
 // ─── Main Random Roll Action ────────────────────────────────────────────────
@@ -332,8 +440,8 @@ function executeRandomRoll() {
   // 1. Roll for morning
   const morningList = pickMultiple(settings.morning, settings.global, []);
 
-  // 2. Roll for evening (exclude morning picks to prevent same-day duplicates)
-  const excludeForEvening = morningList.map(m => m.id);
+  // 2. Roll for evening (exclude morning base dishes to prevent duplicate base dishes in one day)
+  const excludeForEvening = morningList.map(m => m.baseId);
   const eveningList = pickMultiple(
     settings.evening,
     settings.global,
@@ -346,8 +454,8 @@ function executeRandomRoll() {
 
   // 3. Save to history
   const historyBatch = [
-    ...morningList.map(m => ({ id: m.id, name: m.name, meal: 'morning' })),
-    ...eveningList.map(m => ({ id: m.id, name: m.name, meal: 'evening' })),
+    ...morningList.map(m => ({ id: m.id, baseId: m.baseId, name: m.name, meal: 'morning' })),
+    ...eveningList.map(m => ({ id: m.id, baseId: m.baseId, name: m.name, meal: 'evening' })),
   ];
   if (historyBatch.length) {
     addHistory(historyBatch);
@@ -481,7 +589,7 @@ function renderCutsChips() {
   const container = document.getElementById('cuts-chips-container');
   if (!container) return;
 
-  const allMenus = getCombinedMenus(MENUS);
+  const allBases = getCombinedBaseMenus(BASE_MENUS);
   const savedSettings = loadSettings();
   const selectedCuts = savedSettings.global.specific_cuts || [];
 
@@ -501,12 +609,13 @@ function renderCutsChips() {
     html += `<div class="chips-grid cuts-chips-grid">`;
 
     catData.cuts.forEach(cut => {
-      // Calculate count of menus for this cut
-      const count = allMenus.filter(m => {
+      // Calculate count of base menus that can use this cut
+      const count = allBases.filter(b => {
+        const allowed = b.allowed_proteins || ['ผัก'];
         if (cut.id === 'ผัก') {
-          return (!m.protein_groups || m.protein_groups.length === 0) || (m.proteins && m.proteins.includes('ผัก'));
+          return allowed.includes('ผัก');
         }
-        return (m.proteins && m.proteins.includes(cut.id)) || m.name.includes(cut.id);
+        return allowed.includes(cut.id) || (b.base_name && b.base_name.includes(cut.id));
       }).length;
 
       const isChecked = selectedCuts.includes(cut.id);
@@ -845,11 +954,14 @@ function handleSaveNewMenu() {
 
   const newMenu = {
     name,
+    base_name: name,
+    name_template: name.includes('{protein}') ? name : `${name}{protein}`,
     cuisine,
     region,
     dish_type: dishType,
     spicy,
     is_pair: isPair,
+    allowed_proteins: selectedCuts.length ? selectedCuts : ['ผัก'],
     proteins: selectedCuts.length ? selectedCuts : ['ผัก'],
     protein_groups: Array.from(groups),
   };
