@@ -437,8 +437,13 @@ function executeRandomRoll() {
   const settings = readFormSettings();
   saveSettings(settings);
 
-  // 1. Roll for morning
-  const morningList = pickMultiple(settings.morning, settings.global, []);
+  // 1. Roll for morning (support morning pair soup e.g. แกงจืด / ซุปใส)
+  const morningList = pickMultiple(
+    settings.morning,
+    settings.global,
+    [],
+    settings.morning.pair_soup
+  );
 
   // 2. Roll for evening (exclude morning base dishes to prevent duplicate base dishes in one day)
   const excludeForEvening = morningList.map(m => m.baseId);
@@ -489,7 +494,8 @@ function readFormSettings() {
     morning: {
       count: parseInt(morningCountBtn ? morningCountBtn.dataset.val : '2', 10),
       no_spicy: document.getElementById('morning-no-spicy').checked,
-      dish_types: morningTypes.length ? morningTypes : ['กับข้าว'],
+      dish_types: morningTypes.length ? morningTypes : ['กับข้าว', 'ต้ม/แกง'],
+      pair_soup: document.getElementById('morning-pair-soup') ? document.getElementById('morning-pair-soup').checked : false,
     },
     evening: {
       count: parseInt(eveningCountBtn ? eveningCountBtn.dataset.val : '2', 10),
@@ -513,6 +519,9 @@ function applySettingsToForm(s) {
     btn.classList.toggle('active', btn.dataset.val === String(s.morning.count));
   });
   document.getElementById('morning-no-spicy').checked = Boolean(s.morning.no_spicy);
+  if (document.getElementById('morning-pair-soup')) {
+    document.getElementById('morning-pair-soup').checked = Boolean(s.morning.pair_soup);
+  }
   document.querySelectorAll('[name=morning-types]').forEach(cb => {
     cb.checked = s.morning.dish_types ? s.morning.dish_types.includes(cb.value) : false;
   });
@@ -557,7 +566,9 @@ function checkIfSettingsAreDefault() {
   const isDefault =
     current.morning.count === def.morning.count &&
     current.morning.no_spicy === def.morning.no_spicy &&
-    current.morning.dish_types.length === 1 && current.morning.dish_types[0] === 'กับข้าว' &&
+    Boolean(current.morning.pair_soup) === Boolean(def.morning.pair_soup) &&
+    current.morning.dish_types.includes('กับข้าว') &&
+    current.morning.dish_types.includes('ต้ม/แกง') &&
     current.evening.count === def.evening.count &&
     current.evening.no_spicy === def.evening.no_spicy &&
     current.evening.pair_soup === def.evening.pair_soup &&

@@ -8,7 +8,8 @@ export const DEFAULT_SETTINGS = {
   morning: {
     count:          2,
     no_spicy:       true,
-    dish_types:     ['กับข้าว'],
+    dish_types:     ['กับข้าว', 'ต้ม/แกง'],
+    pair_soup:      false,
   },
   evening: {
     count:          2,

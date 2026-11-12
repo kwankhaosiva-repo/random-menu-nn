@@ -55,7 +55,7 @@
 
   <!-- TOP HERO: Instant Randomizer CTA (เข้ามาแล้วใช้ได้เลยทันที) -->
   <section class="top-hero-card">
-    <div class="hero-action-row">
+    <div class="hero-container-centered">
       <button id="btn-random-hero" class="btn-hero-primary" type="button">
         <div class="hero-btn-inner">
           <svg class="shuffle-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
@@ -67,19 +67,20 @@
           </svg>
           <span class="hero-btn-title">สุ่มเมนูอาหารทันที</span>
         </div>
-        <span class="hero-btn-hint">สุ่มทั้งมื้อเช้าและมื้อเย็นตามค่าที่กำหนด</span>
+        <span class="hero-btn-hint">สุ่มทั้งมื้อเช้าและมื้อเย็นทันที ในคลิกเดียว</span>
       </button>
 
-      <div class="quick-default-controls">
-        <label class="default-quick-toggle" title="คืนค่าและใช้การตั้งค่าเริ่มต้นมาตรฐาน">
+      <!-- Compact Default Checkbox Under the Button -->
+      <div class="hero-sub-controls">
+        <label class="default-compact-toggle" title="เปิดใช้การตั้งค่าเริ่มต้นมาตรฐาน">
           <input type="checkbox" id="chk-use-default" checked />
-          <span class="chk-box"></span>
-          <span class="chk-text">
-            <strong>ใช้ค่าเริ่มต้นมาตรฐาน (Default)</strong>
-            <span>เช้า: กับข้าว 2 จาน (ไม่เผ็ด) | เย็น: 2 จาน (มีต้ม/แกง)</span>
+          <span class="chk-box-mini"></span>
+          <span class="chk-text-mini">
+            <strong>ใช้ค่าเริ่มต้น (Default)</strong>
+            <span>— เช้า: 2 จาน (ไม่เผ็ด) | เย็น: 2 จาน (มีต้ม/แกง)</span>
           </span>
         </label>
-        <button type="button" id="btn-quick-reset" class="btn-reset-compact">คืนค่าเริ่มต้น</button>
+        <button type="button" id="btn-quick-reset" class="btn-reset-mini" title="คืนการตั้งค่าเป็นค่าเริ่มต้น">คืนค่าเริ่มต้น</button>
       </div>
     </div>
   </section>
@@ -141,13 +142,17 @@
           </div>
         </div>
 
-        <!-- Morning Dish Types: Only กับข้าว and จานเดียว (No ต้ม/แกง) -->
+        <!-- Morning Dish Types: กับข้าว, ต้ม / แกง (แกงจืด), จานเดียว -->
         <div class="form-group">
           <label class="field-label">ประเภทอาหารมื้อเช้า</label>
           <div class="type-pills-row">
             <label class="type-pill-toggle">
               <input type="checkbox" name="morning-types" value="กับข้าว" checked />
               <span class="pill-btn">กับข้าว</span>
+            </label>
+            <label class="type-pill-toggle">
+              <input type="checkbox" name="morning-types" value="ต้ม/แกง" checked />
+              <span class="pill-btn">ต้ม / แกง (แกงจืด)</span>
             </label>
             <label class="type-pill-toggle">
               <input type="checkbox" name="morning-types" value="จานเดียว" />
@@ -163,6 +168,15 @@
             <span class="checkbox-content">
               <span class="option-title">ไม่รับรสเผ็ดในมื้อเช้า</span>
               <span class="option-hint">สุ่มเฉพาะเมนูที่ไม่เผ็ดและทานง่ายช่วงเช้า</span>
+            </span>
+          </label>
+
+          <label class="custom-checkbox">
+            <input type="checkbox" id="morning-pair-soup" />
+            <span class="checkbox-box"></span>
+            <span class="checkbox-content">
+              <span class="option-title">ต้องมีเมนูต้มจืดหรือแกง 1 รายการ</span>
+              <span class="option-hint">การันตีให้มื้อเช้ามีต้มจืดหรือซุปใสซดน้ำคล่องคอ</span>
             </span>
           </label>
         </div>
