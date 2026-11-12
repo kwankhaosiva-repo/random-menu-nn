@@ -647,14 +647,14 @@ function checkIfSettingsAreDefault() {
   const isDefault =
     current.morning.count === def.morning.count &&
     current.morning.no_spicy === def.morning.no_spicy &&
-    Boolean(current.morning.pair_soup) === Boolean(def.morning.pair_soup) &&
+    Boolean(current.morning.pair_soup) === false &&
+    current.morning.dish_types.length === 1 &&
     current.morning.dish_types.includes('กับข้าว') &&
-    current.morning.dish_types.includes('ต้ม/แกง') &&
     current.evening.count === def.evening.count &&
     current.evening.no_spicy === def.evening.no_spicy &&
-    Boolean(current.evening.pair_soup) === Boolean(def.evening.pair_soup) &&
+    Boolean(current.evening.pair_soup) === false &&
+    current.evening.dish_types.length === 1 &&
     current.evening.dish_types.includes('กับข้าว') &&
-    current.evening.dish_types.includes('ต้ม/แกง') &&
     current.global.no_repeat_30d === def.global.no_repeat_30d &&
     current.global.specific_cuts.length === 0 &&
     hasAllRegions &&
