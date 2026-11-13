@@ -271,33 +271,70 @@ export async function saveMenuToFirestore(menu) {
   const docRef = await addDoc(collection(db, FIRESTORE_COLLECTION), payload);
   const savedMenu = { ...payload, id: docRef.id, is_custom: true, is_firestore: true };
 
-  // Update in-memory list
-  const existingIdx = remoteCustomMenus.findIndex(m => m.id === savedMenu.id || m.name === savedMenu.name);
+  // Update in-memory list (deduplicated by normalized name)
+  const normKey = normalizeDishKey(savedMenu);
+  const existingIdx = remoteCustomMenus.findIndex(m => normalizeDishKey(m) === normKey);
   if (existingIdx !== -1) {
     remoteCustomMenus[existingIdx] = savedMenu;
   } else {
     remoteCustomMenus.unshift(savedMenu);
   }
 
+  // Update local storage cache to keep in sync without duplicates
+  try {
+    const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
+    const local = raw ? JSON.parse(raw) : [];
+    const filtered = local.filter(m => normalizeDishKey(m) !== normKey);
+    filtered.unshift(savedMenu);
+    localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(filtered));
+  } catch {}
+
   return savedMenu;
+}
+
+function normalizeDishKey(dish) {
+  return (dish.name || dish.id || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 export function loadCustomMenus() {
   try {
     const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
     const local = raw ? JSON.parse(raw) : [];
-    // Merge remote database and local offline cache
+
+    // Deduplicate remote database and local offline cache by normalized name
     const map = new Map();
+
+    // 1. Remote Firestore items take priority
     remoteCustomMenus.forEach(m => {
-      const key = m.id || m.name;
-      map.set(key, { ...m, is_custom: true, is_github_db: true });
-    });
-    local.forEach(m => {
-      const key = m.id || m.name;
-      if (!map.has(key)) {
+      const key = normalizeDishKey(m);
+      if (key) {
         map.set(key, { ...m, is_custom: true });
       }
     });
+
+    // 2. Local offline drafts fill in if not already present in remote
+    let localModified = false;
+    const cleanedLocal = [];
+
+    local.forEach(m => {
+      const key = normalizeDishKey(m);
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, { ...m, is_custom: true });
+        cleanedLocal.push(m);
+      } else {
+        // Already in remote or duplicated locally
+        localModified = true;
+      }
+    });
+
+    // Auto-clean duplicates from localStorage
+    if (localModified) {
+      try {
+        localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(cleanedLocal));
+      } catch {}
+    }
+
     return [...map.values()];
   } catch {
     return remoteCustomMenus;
@@ -305,29 +342,41 @@ export function loadCustomMenus() {
 }
 
 export function addCustomMenu(menu) {
-  const custom = loadCustomMenus();
+  const normKey = normalizeDishKey(menu);
   const id = menu.id || `custom_${Date.now()}`;
   const newMenu = { ...menu, id, is_custom: true };
 
-  // Save to local storage cache
+  // Save to local storage cache (deduplicated by name)
   try {
     const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
     const local = raw ? JSON.parse(raw) : [];
-    local.unshift(newMenu);
-    localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(local));
+    const filtered = local.filter(m => normalizeDishKey(m) !== normKey);
+    filtered.unshift(newMenu);
+    localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(filtered));
   } catch {}
 
   return newMenu;
 }
 
-export function deleteCustomMenu(id) {
+export function deleteCustomMenu(id, name = '') {
+  const normName = (name || '').trim().replace(/\s+/g, ' ').toLowerCase();
   try {
     const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
     const local = raw ? JSON.parse(raw) : [];
-    const updatedLocal = local.filter(m => m.id !== id);
+    const updatedLocal = local.filter(m => {
+      if (m.id && m.id === id) return false;
+      if (normName && normalizeDishKey(m) === normName) return false;
+      return true;
+    });
     localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(updatedLocal));
   } catch {}
-  remoteCustomMenus = remoteCustomMenus.filter(m => m.id !== id);
+
+  remoteCustomMenus = remoteCustomMenus.filter(m => {
+    if (m.id && m.id === id) return false;
+    if (normName && normalizeDishKey(m) === normName) return false;
+    return true;
+  });
+
   removeHistoryById(id);
   return loadCustomMenus();
 }

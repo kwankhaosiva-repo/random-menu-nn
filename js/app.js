@@ -1019,7 +1019,7 @@ function renderCatalogList() {
       : '';
     const deleteBtn = m.is_custom
       ? `
-        <button type="button" class="btn-delete-row delete-custom-menu-btn" data-id="${m.id}" title="ลบเมนูนี้ออกจากระบบ">
+        <button type="button" class="btn-delete-row delete-custom-menu-btn" data-id="${m.id}" data-name="${m.name}" title="ลบเมนูนี้ออกจากระบบ">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1056,12 +1056,13 @@ function renderCatalogList() {
   container.querySelectorAll('.delete-custom-menu-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
-      if (confirm('คุณต้องการลบเมนูนี้ออกจากระบบใช่หรือไม่?')) {
-        deleteCustomMenu(id);
+      const name = btn.dataset.name;
+      if (confirm(`คุณต้องการลบเมนู "${name}" ออกจากระบบใช่หรือไม่?`)) {
+        deleteCustomMenu(id, name);
         renderCatalogList();
         renderCutsChips();
         updateHeaderCounts();
-        showToast('ลบเมนูออกจากระบบเรียบร้อย');
+        showToast(`ลบเมนู "${name}" ออกจากระบบเรียบร้อย`);
       }
     });
   });
@@ -1137,8 +1138,6 @@ async function handleSaveNewMenu() {
     protein_groups: Array.from(groups),
   };
 
-  addCustomMenu(newMenu);
-
   const syncToCloud = document.getElementById('chk-sync-cloud')?.checked ?? true;
 
   // Reset form
@@ -1146,24 +1145,32 @@ async function handleSaveNewMenu() {
   document.getElementById('new-menu-spicy').checked = false;
   document.querySelectorAll('[name=new-cut]').forEach(cb => cb.checked = false);
 
-  // Close form & re-render immediately
+  // Close form
   document.getElementById('add-menu-form-panel').classList.remove('open');
-  renderCatalogList();
-  renderCutsChips();
-  updateHeaderCounts();
 
   if (syncToCloud) {
     showToast(`กำลังบันทึกเมนู "${name}" ไปยัง Cloud Firestore...`, 2000);
     try {
       await saveMenuToFirestore(newMenu);
       renderCatalogList();
+      renderCutsChips();
       updateHeaderCounts();
       showToast(`บันทึกเมนู "${name}" เข้าสู่ Cloud Firestore เรียบร้อยแล้ว`);
     } catch (err) {
       console.warn('Firestore Save Notice:', err);
+      // Fallback save to local storage only if cloud save failed
+      addCustomMenu(newMenu);
+      renderCatalogList();
+      renderCutsChips();
+      updateHeaderCounts();
       showToast(`บันทึกในเครื่องแล้ว (${err.message})`, 4500);
     }
   } else {
+    // Save to local storage cache only when cloud sync is unticked
+    addCustomMenu(newMenu);
+    renderCatalogList();
+    renderCutsChips();
+    updateHeaderCounts();
     showToast(`เพิ่มเมนู "${name}" ลงในระบบสำเร็จ`);
   }
 }
@@ -1403,24 +1410,6 @@ async function boot() {
   document.getElementById('catalog-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeCatalogModal();
   });
-
-  // Export DB JSON backup button
-  const btnExportDb = document.getElementById('btn-export-db-json');
-  if (btnExportDb) {
-    btnExportDb.addEventListener('click', () => {
-      const customMenus = loadCustomMenus();
-      const blob = new Blob([JSON.stringify(customMenus, null, 2)], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'custom_db.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('ดาวน์โหลด custom_db.json สำเร็จ');
-    });
-  }
 
   // Initialize Client Security Badge (Fingerprint + IP)
   (async () => {
