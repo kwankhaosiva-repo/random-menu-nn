@@ -5,7 +5,7 @@ import {
   loadHistory, addHistory, removeHistoryItem, removeHistoryById, clearHistory, isInHistory,
   loadCustomMenus, addCustomMenu, deleteCustomMenu, getCombinedMenus, getCombinedBaseMenus,
   DEFAULT_SETTINGS,
-  initRemoteCustomDb, commitMenuToGitHub, getGitHubConfig, saveGitHubConfig,
+  initRemoteCustomDb, saveMenuToFirestore, getClientIp, getDeviceFingerprint,
 } from './storage.js';
 
 const CURRENT_ROLL_KEY = 'rm_current_roll';
@@ -1139,8 +1139,7 @@ async function handleSaveNewMenu() {
 
   addCustomMenu(newMenu);
 
-  const syncToGh = document.getElementById('chk-sync-github')?.checked;
-  const { token, repo } = getGitHubConfig();
+  const syncToCloud = document.getElementById('chk-sync-cloud')?.checked ?? true;
 
   // Reset form
   nameInput.value = '';
@@ -1153,20 +1152,16 @@ async function handleSaveNewMenu() {
   renderCutsChips();
   updateHeaderCounts();
 
-  if (syncToGh) {
-    if (token) {
-      showToast(`กำลังบันทึกเมนู "${name}" ไปยัง GitHub Database...`, 2000);
-      try {
-        await commitMenuToGitHub(newMenu, token, repo);
-        renderCatalogList();
-        updateHeaderCounts();
-        showToast(`บันทึกเมนู "${name}" ลง GitHub Database เรียบร้อยแล้ว`);
-      } catch (err) {
-        console.error('GitHub Commit Error:', err);
-        showToast(`บันทึกในเครื่องแล้ว (แต่ส่งไป GitHub ไม่สำเร็จ: ${err.message})`, 5000);
-      }
-    } else {
-      showToast(`บันทึกในเครื่องแล้ว (หากต้องการบันทึกลง GitHub DB กรุณากด "ตั้งค่า GitHub Token")`, 4500);
+  if (syncToCloud) {
+    showToast(`กำลังบันทึกเมนู "${name}" ไปยัง Cloud Firestore...`, 2000);
+    try {
+      await saveMenuToFirestore(newMenu);
+      renderCatalogList();
+      updateHeaderCounts();
+      showToast(`บันทึกเมนู "${name}" เข้าสู่ Cloud Firestore เรียบร้อยแล้ว`);
+    } catch (err) {
+      console.warn('Firestore Save Notice:', err);
+      showToast(`บันทึกในเครื่องแล้ว (${err.message})`, 4500);
     }
   } else {
     showToast(`เพิ่มเมนู "${name}" ลงในระบบสำเร็จ`);
@@ -1427,31 +1422,21 @@ async function boot() {
     });
   }
 
-  // GitHub DB Settings Drawer
-  const btnToggleGh = document.getElementById('btn-toggle-gh-settings');
-  const ghDrawer = document.getElementById('gh-token-drawer');
-  const ghTokenInput = document.getElementById('gh-token-input');
-  const btnSaveGhToken = document.getElementById('btn-save-gh-token');
-
-  if (btnToggleGh && ghDrawer) {
-    btnToggleGh.addEventListener('click', () => {
-      ghDrawer.classList.toggle('hidden');
-      if (!ghDrawer.classList.contains('hidden') && ghTokenInput) {
-        const conf = getGitHubConfig();
-        ghTokenInput.value = conf.token || '';
-        ghTokenInput.focus();
+  // Initialize Client Security Badge (Fingerprint + IP)
+  (async () => {
+    try {
+      const fp = getDeviceFingerprint();
+      const ip = await getClientIp();
+      const badgeText = document.getElementById('badge-security-text');
+      const badgeContainer = document.getElementById('client-security-badge');
+      if (badgeText && badgeContainer) {
+        badgeText.textContent = `${fp} • IP: ${ip}`;
+        badgeContainer.classList.add('active');
       }
-    });
-  }
-
-  if (btnSaveGhToken && ghTokenInput) {
-    btnSaveGhToken.addEventListener('click', () => {
-      const val = ghTokenInput.value.trim();
-      saveGitHubConfig(val);
-      showToast(val ? 'บันทึก GitHub Token เรียบร้อยแล้ว' : 'ล้าง GitHub Token แล้ว');
-      if (ghDrawer) ghDrawer.classList.add('hidden');
-    });
-  }
+    } catch (e) {
+      console.warn('Security badge init:', e);
+    }
+  })();
 
   const catSearch = document.getElementById('catalog-search-input');
   catSearch.addEventListener('input', e => {

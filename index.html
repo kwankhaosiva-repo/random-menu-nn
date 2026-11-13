@@ -590,32 +590,25 @@
           </label>
         </div>
 
-        <div class="form-row github-sync-section">
-          <div class="github-sync-header">
+        <div class="form-row cloud-sync-section">
+          <div class="cloud-sync-header">
             <label class="custom-checkbox inline">
-              <input type="checkbox" id="chk-sync-github" checked />
+              <input type="checkbox" id="chk-sync-cloud" checked />
               <span class="checkbox-box"></span>
-              <span class="github-sync-label">
-                <strong>บันทึกเข้า GitHub Database ถาวร</strong> (Commit เข้า data/custom_db.json)
+              <span class="cloud-sync-label">
+                <strong>บันทึกเข้า Google Cloud Firestore</strong> (แชร์ให้ทุกคนเห็นเมนูนี้)
               </span>
             </label>
-            <button type="button" id="btn-toggle-gh-settings" class="btn-text-action">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            <span class="cloud-security-badge" id="client-security-badge" title="บันทึกพร้อม Client IP และ Device Fingerprint เพื่อความปลอดภัย">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               </svg>
-              <span>ตั้งค่า GitHub Token</span>
-            </button>
+              <span id="badge-security-text">กำลังตรวจสอบอุปกรณ์...</span>
+            </span>
           </div>
-          <div id="gh-token-drawer" class="gh-token-drawer hidden">
-            <p class="gh-hint-text">
-              ใส่ GitHub Personal Access Token (แบบ repo contents read/write) เพื่อบันทึกเมนูใหม่ลงไฟล์ <code>data/custom_db.json</code> บน GitHub โดยตรง ไม่สูญหายแม้ล้างแคชในเบราว์เซอร์
-            </p>
-            <div class="form-row-compact">
-              <input type="password" id="gh-token-input" class="form-input" placeholder="github_pat_... หรือ ghp_..." autocomplete="off" />
-              <button type="button" id="btn-save-gh-token" class="btn-secondary">บันทึก Token</button>
-            </div>
-          </div>
+          <p class="cloud-hint-text">
+            บันทึกตรงเข้าคลาวด์อัตโนมัติ ไม่ต้องใส่ Token พร้อมแนบ Device Fingerprint และ Public IP เพื่อความปลอดภัย
+          </p>
         </div>
 
         <div class="form-actions">

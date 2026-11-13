@@ -101,15 +101,134 @@ export function isInHistory(id) {
   return loadHistory().some(h => h.id === id);
 }
 
-// ─── Custom Menus & GitHub Database Sync ────────────────────────────────────
+// ─── Firebase Firestore Cloud Database Sync ─────────────────────────────────
 
-export const GITHUB_REPO_KEY  = 'rm_github_repo';
-export const GITHUB_TOKEN_KEY = 'rm_github_token';
-export const DEFAULT_REPO     = 'kwankhaosiva-repo/random-menu-nn';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { 
+  getFirestore, collection, getDocs, addDoc, query, limit 
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
+export const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB8I9wgtcQRYzncYjcyOlOycdS_e52Jybw",
+  authDomain: "random-menu-nn.firebaseapp.com",
+  projectId: "random-menu-nn",
+  storageBucket: "random-menu-nn.firebasestorage.app",
+};
+
+export const FIRESTORE_DATABASE_ID = "random-menu-nn-db";
+export const FIRESTORE_COLLECTION = "custom_menus";
+export const QUERY_LIMIT = 500;
+
+let dbInstance = null;
+let cachedClientIp = null;
 let remoteCustomMenus = [];
 
+export function getDb() {
+  if (dbInstance) return dbInstance;
+  try {
+    const app = initializeApp(FIREBASE_CONFIG);
+    try {
+      dbInstance = getFirestore(app, FIRESTORE_DATABASE_ID);
+    } catch {
+      dbInstance = getFirestore(app);
+    }
+    return dbInstance;
+  } catch (e) {
+    console.warn('Could not initialize Firebase Firestore:', e);
+    return null;
+  }
+}
+
+// ─── Client Security: IP & Device Fingerprint ───────────────────────────────
+
+export async function getClientIp() {
+  if (cachedClientIp) return cachedClientIp;
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3500) });
+    if (res.ok) {
+      const data = await res.json();
+      cachedClientIp = data.ip || 'unknown';
+      return cachedClientIp;
+    }
+  } catch (e) {
+    console.warn('Could not fetch public IP:', e);
+  }
+  return 'unknown';
+}
+
+export function getDeviceFingerprint() {
+  try {
+    const nav = window.navigator;
+    const scr = window.screen;
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 50;
+    const ctx = canvas.getContext('2d');
+    let canvasHash = 0;
+    if (ctx) {
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#f60';
+      ctx.fillRect(10, 5, 62, 20);
+      ctx.fillStyle = '#069';
+      ctx.fillText('random-menu-fp', 2, 15);
+      const dataUrl = canvas.toDataURL();
+      for (let i = 0; i < dataUrl.length; i++) {
+        canvasHash = ((canvasHash << 5) - canvasHash) + dataUrl.charCodeAt(i);
+        canvasHash |= 0;
+      }
+    }
+
+    const rawId = [
+      nav.userAgent || '',
+      nav.language || '',
+      nav.hardwareConcurrency || '',
+      scr.width || '',
+      scr.height || '',
+      scr.colorDepth || '',
+      new Date().getTimezoneOffset(),
+      canvasHash
+    ].join('###');
+
+    let hash = 2166136261;
+    for (let i = 0; i < rawId.length; i++) {
+      hash ^= rawId.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    const hex = (hash >>> 0).toString(16).padStart(8, '0');
+    return `fp_${hex}`;
+  } catch {
+    return 'fp_fallback';
+  }
+}
+
+// ─── Remote Custom Menus Synchronization ────────────────────────────────────
+
 export async function initRemoteCustomDb() {
+  // 1. Try fetching from Cloud Firestore with Query Limit 500
+  const db = getDb();
+  if (db) {
+    try {
+      const q = query(collection(db, FIRESTORE_COLLECTION), limit(QUERY_LIMIT));
+      const snap = await getDocs(q);
+      if (snap && !snap.empty) {
+        remoteCustomMenus = snap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            ...data,
+            id: data.id || doc.id,
+            is_custom: true,
+            is_firestore: true,
+          };
+        });
+        return remoteCustomMenus;
+      }
+    } catch (err) {
+      console.warn('Firestore load skipped (fallback to local custom_db.json):', err.message);
+    }
+  }
+
+  // 2. Fallback to repository static custom_db.json
   try {
     const res = await fetch(`./data/custom_db.json?t=${Date.now()}`);
     if (res.ok) {
@@ -119,22 +238,48 @@ export async function initRemoteCustomDb() {
       }
     }
   } catch (e) {
-    console.warn('Could not load central custom_db.json:', e);
+    console.warn('Could not load local custom_db.json fallback:', e);
   }
   return remoteCustomMenus;
 }
 
-export function getGitHubConfig() {
-  return {
-    repo: localStorage.getItem(GITHUB_REPO_KEY) || DEFAULT_REPO,
-    token: localStorage.getItem(GITHUB_TOKEN_KEY) || '',
-  };
-}
+export async function saveMenuToFirestore(menu) {
+  const db = getDb();
+  if (!db) throw new Error('ไม่สามารถเชื่อมต่อ Firebase Firestore ได้');
 
-export function saveGitHubConfig(token, repo = DEFAULT_REPO) {
-  if (token) localStorage.setItem(GITHUB_TOKEN_KEY, token.trim());
-  else localStorage.removeItem(GITHUB_TOKEN_KEY);
-  if (repo) localStorage.setItem(GITHUB_REPO_KEY, repo.trim());
+  const client_ip = await getClientIp();
+  const fingerprint_id = getDeviceFingerprint();
+  const created_at = new Date().toISOString();
+
+  const payload = {
+    name: String(menu.name).trim(),
+    base_name: String(menu.base_name || menu.name).trim(),
+    name_template: String(menu.name_template || menu.name).trim(),
+    cuisine: String(menu.cuisine || 'ไทย'),
+    region: menu.region ? String(menu.region) : null,
+    dish_type: String(menu.dish_type || 'กับข้าว'),
+    spicy: Boolean(menu.spicy),
+    is_pair: Boolean(menu.is_pair),
+    allowed_proteins: Array.isArray(menu.allowed_proteins) ? menu.allowed_proteins : ['ผัก'],
+    proteins: Array.isArray(menu.proteins) ? menu.proteins : ['ผัก'],
+    protein_groups: Array.isArray(menu.protein_groups) ? menu.protein_groups : [],
+    created_at,
+    fingerprint_id,
+    client_ip,
+  };
+
+  const docRef = await addDoc(collection(db, FIRESTORE_COLLECTION), payload);
+  const savedMenu = { ...payload, id: docRef.id, is_custom: true, is_firestore: true };
+
+  // Update in-memory list
+  const existingIdx = remoteCustomMenus.findIndex(m => m.id === savedMenu.id || m.name === savedMenu.name);
+  if (existingIdx !== -1) {
+    remoteCustomMenus[existingIdx] = savedMenu;
+  } else {
+    remoteCustomMenus.unshift(savedMenu);
+  }
+
+  return savedMenu;
 }
 
 export function loadCustomMenus() {
@@ -173,73 +318,6 @@ export function addCustomMenu(menu) {
   } catch {}
 
   return newMenu;
-}
-
-export async function commitMenuToGitHub(newMenu, token, repo = DEFAULT_REPO) {
-  if (!token) throw new Error('ไม่พบ GitHub Personal Access Token');
-  const cleanRepo = repo.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
-  const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/data/custom_db.json`;
-
-  let currentList = [];
-  let sha = null;
-
-  const getRes = await fetch(apiUrl, {
-    headers: {
-      'Authorization': `token ${token.trim()}`,
-      'Accept': 'application/vnd.github.v3+json',
-    }
-  });
-
-  if (getRes.ok) {
-    const fileData = await getRes.json();
-    sha = fileData.sha;
-    if (fileData.content) {
-      try {
-        const decoded = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
-        currentList = JSON.parse(decoded);
-      } catch {}
-    }
-  } else if (getRes.status !== 404) {
-    const errJson = await getRes.json().catch(() => ({}));
-    throw new Error(`GitHub API (${getRes.status}): ${errJson.message || getRes.statusText}`);
-  }
-
-  // Append new menu if not duplicate
-  const existingIdx = currentList.findIndex(m => m.id === newMenu.id || m.name === newMenu.name);
-  if (existingIdx !== -1) {
-    currentList[existingIdx] = newMenu;
-  } else {
-    currentList.push(newMenu);
-  }
-
-  const updatedJsonStr = JSON.stringify(currentList, null, 2);
-  const base64Content = btoa(unescape(encodeURIComponent(updatedJsonStr)));
-
-  const putPayload = {
-    message: `🍱 Add menu: "${newMenu.name}" to custom_db.json [via Web DB]`,
-    content: base64Content,
-    branch: 'main',
-  };
-  if (sha) putPayload.sha = sha;
-
-  const putRes = await fetch(apiUrl, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `token ${token.trim()}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(putPayload),
-  });
-
-  if (!putRes.ok) {
-    const errJson = await putRes.json().catch(() => ({}));
-    throw new Error(`บันทึกลง GitHub ล้มเหลว (${putRes.status}): ${errJson.message || putRes.statusText}`);
-  }
-
-  // Update in-memory remote database immediately
-  remoteCustomMenus = currentList.map(m => ({ ...m, is_custom: true, is_github_db: true }));
-  return putRes.json();
 }
 
 export function deleteCustomMenu(id) {
