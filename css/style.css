@@ -2059,6 +2059,87 @@ body {
   align-items: center;
 }
 
+/* GitHub DB Sync Section */
+.github-sync-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.github-sync-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.github-sync-label {
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.btn-text-action {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.btn-text-action:hover {
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.gh-token-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  animation: slide-down 0.2s ease;
+}
+
+.gh-token-drawer.hidden {
+  display: none;
+}
+
+.gh-hint-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.gh-hint-text code {
+  background: #f1f5f9;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.74rem;
+  color: var(--primary);
+}
+
+.form-row-compact {
+  display: flex;
+  gap: 8px;
+}
+
+.form-row-compact .form-input {
+  flex: 1;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

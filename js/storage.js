@@ -101,14 +101,61 @@ export function isInHistory(id) {
   return loadHistory().some(h => h.id === id);
 }
 
-// ─── Custom Menus ────────────────────────────────────────────────────────────
+// ─── Custom Menus & GitHub Database Sync ────────────────────────────────────
+
+export const GITHUB_REPO_KEY  = 'rm_github_repo';
+export const GITHUB_TOKEN_KEY = 'rm_github_token';
+export const DEFAULT_REPO     = 'kwankhaosiva-repo/random-menu-nn';
+
+let remoteCustomMenus = [];
+
+export async function initRemoteCustomDb() {
+  try {
+    const res = await fetch(`./data/custom_db.json?t=${Date.now()}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        remoteCustomMenus = data.map(m => ({ ...m, is_custom: true, is_github_db: true }));
+      }
+    }
+  } catch (e) {
+    console.warn('Could not load central custom_db.json:', e);
+  }
+  return remoteCustomMenus;
+}
+
+export function getGitHubConfig() {
+  return {
+    repo: localStorage.getItem(GITHUB_REPO_KEY) || DEFAULT_REPO,
+    token: localStorage.getItem(GITHUB_TOKEN_KEY) || '',
+  };
+}
+
+export function saveGitHubConfig(token, repo = DEFAULT_REPO) {
+  if (token) localStorage.setItem(GITHUB_TOKEN_KEY, token.trim());
+  else localStorage.removeItem(GITHUB_TOKEN_KEY);
+  if (repo) localStorage.setItem(GITHUB_REPO_KEY, repo.trim());
+}
 
 export function loadCustomMenus() {
   try {
     const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const local = raw ? JSON.parse(raw) : [];
+    // Merge remote database and local offline cache
+    const map = new Map();
+    remoteCustomMenus.forEach(m => {
+      const key = m.id || m.name;
+      map.set(key, { ...m, is_custom: true, is_github_db: true });
+    });
+    local.forEach(m => {
+      const key = m.id || m.name;
+      if (!map.has(key)) {
+        map.set(key, { ...m, is_custom: true });
+      }
+    });
+    return [...map.values()];
   } catch {
-    return [];
+    return remoteCustomMenus;
   }
 }
 
@@ -116,16 +163,95 @@ export function addCustomMenu(menu) {
   const custom = loadCustomMenus();
   const id = menu.id || `custom_${Date.now()}`;
   const newMenu = { ...menu, id, is_custom: true };
-  custom.unshift(newMenu);
-  localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(custom));
+
+  // Save to local storage cache
+  try {
+    const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
+    const local = raw ? JSON.parse(raw) : [];
+    local.unshift(newMenu);
+    localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(local));
+  } catch {}
+
   return newMenu;
 }
 
+export async function commitMenuToGitHub(newMenu, token, repo = DEFAULT_REPO) {
+  if (!token) throw new Error('ไม่พบ GitHub Personal Access Token');
+  const cleanRepo = repo.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+  const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/data/custom_db.json`;
+
+  let currentList = [];
+  let sha = null;
+
+  const getRes = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `token ${token.trim()}`,
+      'Accept': 'application/vnd.github.v3+json',
+    }
+  });
+
+  if (getRes.ok) {
+    const fileData = await getRes.json();
+    sha = fileData.sha;
+    if (fileData.content) {
+      try {
+        const decoded = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
+        currentList = JSON.parse(decoded);
+      } catch {}
+    }
+  } else if (getRes.status !== 404) {
+    const errJson = await getRes.json().catch(() => ({}));
+    throw new Error(`GitHub API (${getRes.status}): ${errJson.message || getRes.statusText}`);
+  }
+
+  // Append new menu if not duplicate
+  const existingIdx = currentList.findIndex(m => m.id === newMenu.id || m.name === newMenu.name);
+  if (existingIdx !== -1) {
+    currentList[existingIdx] = newMenu;
+  } else {
+    currentList.push(newMenu);
+  }
+
+  const updatedJsonStr = JSON.stringify(currentList, null, 2);
+  const base64Content = btoa(unescape(encodeURIComponent(updatedJsonStr)));
+
+  const putPayload = {
+    message: `🍱 Add menu: "${newMenu.name}" to custom_db.json [via Web DB]`,
+    content: base64Content,
+    branch: 'main',
+  };
+  if (sha) putPayload.sha = sha;
+
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${token.trim()}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(putPayload),
+  });
+
+  if (!putRes.ok) {
+    const errJson = await putRes.json().catch(() => ({}));
+    throw new Error(`บันทึกลง GitHub ล้มเหลว (${putRes.status}): ${errJson.message || putRes.statusText}`);
+  }
+
+  // Update in-memory remote database immediately
+  remoteCustomMenus = currentList.map(m => ({ ...m, is_custom: true, is_github_db: true }));
+  return putRes.json();
+}
+
 export function deleteCustomMenu(id) {
-  const custom = loadCustomMenus().filter(m => m.id !== id);
-  localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(custom));
+  try {
+    const raw = localStorage.getItem(CUSTOM_MENUS_KEY);
+    const local = raw ? JSON.parse(raw) : [];
+    const updatedLocal = local.filter(m => m.id !== id);
+    localStorage.setItem(CUSTOM_MENUS_KEY, JSON.stringify(updatedLocal));
+  } catch {}
+  remoteCustomMenus = remoteCustomMenus.filter(m => m.id !== id);
   removeHistoryById(id);
-  return custom;
+  return loadCustomMenus();
 }
 
 export function getCombinedMenus(baseMenus) {

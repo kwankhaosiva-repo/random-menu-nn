@@ -590,6 +590,34 @@
           </label>
         </div>
 
+        <div class="form-row github-sync-section">
+          <div class="github-sync-header">
+            <label class="custom-checkbox inline">
+              <input type="checkbox" id="chk-sync-github" checked />
+              <span class="checkbox-box"></span>
+              <span class="github-sync-label">
+                <strong>บันทึกเข้า GitHub Database ถาวร</strong> (Commit เข้า data/custom_db.json)
+              </span>
+            </label>
+            <button type="button" id="btn-toggle-gh-settings" class="btn-text-action">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>ตั้งค่า GitHub Token</span>
+            </button>
+          </div>
+          <div id="gh-token-drawer" class="gh-token-drawer hidden">
+            <p class="gh-hint-text">
+              ใส่ GitHub Personal Access Token (แบบ repo contents read/write) เพื่อบันทึกเมนูใหม่ลงไฟล์ <code>data/custom_db.json</code> บน GitHub โดยตรง ไม่สูญหายแม้ล้างแคชในเบราว์เซอร์
+            </p>
+            <div class="form-row-compact">
+              <input type="password" id="gh-token-input" class="form-input" placeholder="github_pat_... หรือ ghp_..." autocomplete="off" />
+              <button type="button" id="btn-save-gh-token" class="btn-secondary">บันทึก Token</button>
+            </div>
+          </div>
+        </div>
+
         <div class="form-actions">
           <button type="button" id="btn-cancel-add-menu" class="btn-secondary">ยกเลิก</button>
           <button type="button" id="btn-save-new-menu" class="btn-primary">บันทึกเมนู</button>
@@ -605,6 +633,14 @@
     <!-- Modal Footer -->
     <div class="modal-footer">
       <span class="footer-stat" id="catalog-footer-stat">กำลังประมวลผล...</span>
+      <button type="button" class="btn-secondary" id="btn-export-db-json" title="ดาวน์โหลดไฟล์ custom_db.json เพื่อนำไปอัปโหลดหรือสำรองข้อมูล">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>ส่งออก JSON</span>
+      </button>
       <button type="button" class="btn-secondary" id="btn-catalog-close-bottom">ปิดหน้าต่าง</button>
     </div>
   </div>

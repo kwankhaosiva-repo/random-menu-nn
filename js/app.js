@@ -5,6 +5,7 @@ import {
   loadHistory, addHistory, removeHistoryItem, removeHistoryById, clearHistory, isInHistory,
   loadCustomMenus, addCustomMenu, deleteCustomMenu, getCombinedMenus, getCombinedBaseMenus,
   DEFAULT_SETTINGS,
+  initRemoteCustomDb, commitMenuToGitHub, getGitHubConfig, saveGitHubConfig,
 } from './storage.js';
 
 const CURRENT_ROLL_KEY = 'rm_current_roll';
@@ -1069,13 +1070,14 @@ function renderCatalogList() {
 function openCatalogModal(initialQuery = '') {
   const modal = document.getElementById('catalog-modal');
   const searchInput = document.getElementById('catalog-search-input');
-  searchInput.value = initialQuery;
-  const wrap = searchInput.closest('.search-input-wrap');
-  if (wrap) wrap.classList.toggle('has-value', Boolean(initialQuery));
+  const queryStr = (typeof initialQuery === 'string') ? initialQuery : '';
+  if (searchInput) searchInput.value = queryStr;
+  const wrap = searchInput ? searchInput.closest('.search-input-wrap') : null;
+  if (wrap) wrap.classList.toggle('has-value', Boolean(queryStr));
   document.getElementById('add-menu-form-panel').classList.remove('open');
   renderCatalogList();
   modal.classList.add('open');
-  if (initialQuery) {
+  if (queryStr && searchInput) {
     searchInput.focus();
     searchInput.select();
   }
@@ -1085,11 +1087,21 @@ function closeCatalogModal() {
   document.getElementById('catalog-modal').classList.remove('open');
 }
 
-function handleSaveNewMenu() {
+async function handleSaveNewMenu() {
   const nameInput = document.getElementById('new-menu-name');
   const name = nameInput.value.trim();
   if (!name) {
     alert('กรุณากรอกชื่อเมนูอาหาร');
+    nameInput.focus();
+    return;
+  }
+
+  // Validate duplicate menu name
+  const allExistingMenus = getCombinedMenus(MENUS);
+  const normalizedNewName = name.replace(/\s+/g, ' ').toLowerCase();
+  const isDuplicate = allExistingMenus.some(m => m.name.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName);
+  if (isDuplicate) {
+    alert(`มีเมนู "${name}" อยู่ในคลังข้อมูลแล้ว ไม่สามารถเพิ่มซ้ำได้`);
     nameInput.focus();
     return;
   }
@@ -1127,17 +1139,38 @@ function handleSaveNewMenu() {
 
   addCustomMenu(newMenu);
 
+  const syncToGh = document.getElementById('chk-sync-github')?.checked;
+  const { token, repo } = getGitHubConfig();
+
   // Reset form
   nameInput.value = '';
   document.getElementById('new-menu-spicy').checked = false;
   document.querySelectorAll('[name=new-cut]').forEach(cb => cb.checked = false);
 
-  // Close form & re-render
+  // Close form & re-render immediately
   document.getElementById('add-menu-form-panel').classList.remove('open');
   renderCatalogList();
   renderCutsChips();
   updateHeaderCounts();
-  showToast(`เพิ่มเมนู "${name}" ลงในระบบสำเร็จ`);
+
+  if (syncToGh) {
+    if (token) {
+      showToast(`กำลังบันทึกเมนู "${name}" ไปยัง GitHub Database...`, 2000);
+      try {
+        await commitMenuToGitHub(newMenu, token, repo);
+        renderCatalogList();
+        updateHeaderCounts();
+        showToast(`บันทึกเมนู "${name}" ลง GitHub Database เรียบร้อยแล้ว`);
+      } catch (err) {
+        console.error('GitHub Commit Error:', err);
+        showToast(`บันทึกในเครื่องแล้ว (แต่ส่งไป GitHub ไม่สำเร็จ: ${err.message})`, 5000);
+      }
+    } else {
+      showToast(`บันทึกในเครื่องแล้ว (หากต้องการบันทึกลง GitHub DB กรุณากด "ตั้งค่า GitHub Token")`, 4500);
+    }
+  } else {
+    showToast(`เพิ่มเมนู "${name}" ลงในระบบสำเร็จ`);
+  }
 }
 
 // ─── Header Count Badges ───────────────────────────────────────────────────
@@ -1155,7 +1188,10 @@ function updateHeaderCounts() {
 
 // ─── Initialization & Event Binding ─────────────────────────────────────────
 
-function boot() {
+async function boot() {
+  // Initialize remote GitHub database if available
+  await initRemoteCustomDb();
+
   // Render granular cuts chips
   renderCutsChips();
   renderNewMenuProteinOptions();
@@ -1366,12 +1402,56 @@ function boot() {
   });
 
   // ─── Catalog Modal Listeners ───
-  document.getElementById('btn-open-catalog').addEventListener('click', openCatalogModal);
+  document.getElementById('btn-open-catalog').addEventListener('click', () => openCatalogModal(''));
   document.getElementById('btn-close-catalog').addEventListener('click', closeCatalogModal);
   document.getElementById('btn-catalog-close-bottom').addEventListener('click', closeCatalogModal);
   document.getElementById('catalog-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeCatalogModal();
   });
+
+  // Export DB JSON backup button
+  const btnExportDb = document.getElementById('btn-export-db-json');
+  if (btnExportDb) {
+    btnExportDb.addEventListener('click', () => {
+      const customMenus = loadCustomMenus();
+      const blob = new Blob([JSON.stringify(customMenus, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'custom_db.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ดาวน์โหลด custom_db.json สำเร็จ');
+    });
+  }
+
+  // GitHub DB Settings Drawer
+  const btnToggleGh = document.getElementById('btn-toggle-gh-settings');
+  const ghDrawer = document.getElementById('gh-token-drawer');
+  const ghTokenInput = document.getElementById('gh-token-input');
+  const btnSaveGhToken = document.getElementById('btn-save-gh-token');
+
+  if (btnToggleGh && ghDrawer) {
+    btnToggleGh.addEventListener('click', () => {
+      ghDrawer.classList.toggle('hidden');
+      if (!ghDrawer.classList.contains('hidden') && ghTokenInput) {
+        const conf = getGitHubConfig();
+        ghTokenInput.value = conf.token || '';
+        ghTokenInput.focus();
+      }
+    });
+  }
+
+  if (btnSaveGhToken && ghTokenInput) {
+    btnSaveGhToken.addEventListener('click', () => {
+      const val = ghTokenInput.value.trim();
+      saveGitHubConfig(val);
+      showToast(val ? 'บันทึก GitHub Token เรียบร้อยแล้ว' : 'ล้าง GitHub Token แล้ว');
+      if (ghDrawer) ghDrawer.classList.add('hidden');
+    });
+  }
 
   const catSearch = document.getElementById('catalog-search-input');
   catSearch.addEventListener('input', e => {
