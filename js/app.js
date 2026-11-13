@@ -261,6 +261,12 @@ function bindDishCardActions(rootEl) {
   rootEl.querySelectorAll('.btn-reroll-protein').forEach(btn => {
     btn.addEventListener('click', handleRerollProtein);
   });
+  rootEl.querySelectorAll('.btn-reroll-meal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const meal = btn.dataset.meal;
+      executeSingleMealRoll(meal, true);
+    });
+  });
 }
 
 function renderResults(morningMenus, eveningMenus) {
@@ -292,8 +298,14 @@ function renderResults(morningMenus, eveningMenus) {
           <div class="meal-title-group">
             <span class="meal-indicator-bar morning-bar"></span>
             <h3 class="meal-result-title morning-text">มื้อเช้า</h3>
+            <span class="dish-count-tag">${morningMenus.length} เมนู</span>
           </div>
-          <span class="dish-count-tag">${morningMenus.length} เมนู</span>
+          <button type="button" class="btn-reroll-meal" data-meal="morning" title="สุ่มใหม่เฉพาะมื้อเช้าทั้งหมด">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>สุ่มใหม่มื้อเช้า</span>
+          </button>
         </div>
         <div class="dish-cards-list">
           ${morningMenus.map(m => renderDishCard(m, 'morning')).join('')}
@@ -309,8 +321,14 @@ function renderResults(morningMenus, eveningMenus) {
           <div class="meal-title-group">
             <span class="meal-indicator-bar evening-bar"></span>
             <h3 class="meal-result-title evening-text">มื้อเย็น</h3>
+            <span class="dish-count-tag">${eveningMenus.length} เมนู</span>
           </div>
-          <span class="dish-count-tag">${eveningMenus.length} เมนู</span>
+          <button type="button" class="btn-reroll-meal" data-meal="evening" title="สุ่มใหม่เฉพาะมื้อเย็นทั้งหมด">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>สุ่มใหม่มื้อเย็น</span>
+          </button>
         </div>
         <div class="dish-cards-list">
           ${eveningMenus.map(m => renderDishCard(m, 'evening')).join('')}
@@ -505,6 +523,66 @@ function executeRandomRoll() {
   showToast(`สุ่มเมนูสำเร็จ รวม ${morningList.length + eveningList.length} รายการ`);
 
   // Scroll smoothly to results right below
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ─── Single Meal Random Roll (สุ่มเฉพาะมื้อเดียว) ────────────────────────────
+
+function executeSingleMealRoll(meal, keepOtherMeal = false) {
+  const settings = readFormSettings();
+  saveSettings(settings);
+
+  if (meal === 'morning') {
+    const slotSettings = {
+      ...settings.morning,
+      count: settings.morning.count > 0 ? settings.morning.count : 2
+    };
+    const morningList = pickMultiple(
+      slotSettings,
+      settings.global,
+      [],
+      slotSettings.pair_soup
+    );
+    currentMorning = morningList;
+    if (!keepOtherMeal) {
+      currentEvening = [];
+    }
+
+    const historyBatch = morningList.map(m => ({ id: m.id, baseId: m.baseId, name: m.name, meal: 'morning' }));
+    if (historyBatch.length) addHistory(historyBatch);
+
+    renderResults(currentMorning, currentEvening);
+    saveCurrentRollState();
+    updateHeaderCounts();
+    showToast(`สุ่มเฉพาะมื้อเช้าสำเร็จ ${morningList.length} รายการ`);
+  } else if (meal === 'evening') {
+    const slotSettings = {
+      ...settings.evening,
+      count: settings.evening.count > 0 ? settings.evening.count : 2
+    };
+    // Exclude morning base dishes to prevent duplicate base dishes in one day
+    const excludeForEvening = keepOtherMeal ? currentMorning.map(m => m.baseId) : [];
+    const eveningList = pickMultiple(
+      slotSettings,
+      settings.global,
+      excludeForEvening,
+      slotSettings.pair_soup
+    );
+    currentEvening = eveningList;
+    if (!keepOtherMeal) {
+      currentMorning = [];
+    }
+
+    const historyBatch = eveningList.map(m => ({ id: m.id, baseId: m.baseId, name: m.name, meal: 'evening' }));
+    if (historyBatch.length) addHistory(historyBatch);
+
+    renderResults(currentMorning, currentEvening);
+    saveCurrentRollState();
+    updateHeaderCounts();
+    showToast(`สุ่มเฉพาะมื้อเย็นสำเร็จ ${eveningList.length} รายการ`);
+  }
+
+  // Scroll smoothly to results
   document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -1310,8 +1388,18 @@ async function boot() {
     });
   });
 
-  // Hero Random Button
+  // Hero Random Buttons
   document.getElementById('btn-random-hero').addEventListener('click', executeRandomRoll);
+
+  const btnRollMorning = document.getElementById('btn-roll-morning-only');
+  if (btnRollMorning) {
+    btnRollMorning.addEventListener('click', () => executeSingleMealRoll('morning', false));
+  }
+
+  const btnRollEvening = document.getElementById('btn-roll-evening-only');
+  if (btnRollEvening) {
+    btnRollEvening.addEventListener('click', () => executeSingleMealRoll('evening', false));
+  }
 
   // ─── Config Modal Listeners ───
   const btnConfigHeader = document.getElementById('btn-open-config-header');

@@ -78,6 +78,31 @@
         <span class="hero-btn-hint">สุ่มทั้งมื้อเช้าและมื้อเย็นทันที ในคลิกเดียว</span>
       </button>
 
+      <!-- Quick Single-Meal Actions (สุ่มเฉพาะมื้อใดมื้อหนึ่ง) -->
+      <div class="hero-single-meal-actions">
+        <button type="button" id="btn-roll-morning-only" class="btn-single-meal btn-morning" title="สุ่มเฉพาะมื้อเช้า">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <span>สุ่มเฉพาะมื้อเช้า</span>
+        </button>
+
+        <button type="button" id="btn-roll-evening-only" class="btn-single-meal btn-evening" title="สุ่มเฉพาะมื้อเย็น">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span>สุ่มเฉพาะมื้อเย็น</span>
+        </button>
+      </div>
+
       <!-- Compact Default Checkbox Under the Button -->
       <div class="hero-sub-controls">
         <label class="default-compact-toggle" title="เปิดใช้การตั้งค่าเริ่มต้นมาตรฐาน">
@@ -174,6 +199,7 @@
             <div class="form-group">
               <label class="field-label">จำนวนเมนูมื้อเช้า</label>
               <div class="segmented-control" role="group" aria-label="จำนวนเมนูมื้อเช้า">
+                <button type="button" class="segment-btn" name="morning-count" data-val="0">ไม่สุ่ม</button>
                 <button type="button" class="segment-btn" name="morning-count" data-val="1">1 เมนู</button>
                 <button type="button" class="segment-btn active" name="morning-count" data-val="2">2 เมนู</button>
                 <button type="button" class="segment-btn" name="morning-count" data-val="3">3 เมนู</button>
@@ -236,6 +262,7 @@
             <div class="form-group">
               <label class="field-label">จำนวนเมนูมื้อเย็น</label>
               <div class="segmented-control" role="group" aria-label="จำนวนเมนูมื้อเย็น">
+                <button type="button" class="segment-btn" name="evening-count" data-val="0">ไม่สุ่ม</button>
                 <button type="button" class="segment-btn" name="evening-count" data-val="1">1 เมนู</button>
                 <button type="button" class="segment-btn active" name="evening-count" data-val="2">2 เมนู</button>
                 <button type="button" class="segment-btn" name="evening-count" data-val="3">3 เมนู</button>
